@@ -25,6 +25,7 @@ export type InterviewQuestion = {
   keyTerms: string[];
   coachNote: string;
   strongAnswer: string;
+  hasCode?: boolean;
 };
 
 export type CareerPath = {
@@ -59,250 +60,250 @@ const even = (build = 0, analyze = 0, protect = 0, lead = 0): CareerScore => ({
 
 export const quizQuestions: QuizQuestion[] = [
   {
-    eyebrow: "The blank whiteboard",
-    prompt: "A messy business problem lands in your lap. What do you reach for first?",
-    helper: "Choose the instinct that feels natural—not the one that sounds most impressive.",
+    eyebrow: "Follow the spark",
+    prompt: "Pick something you could see yourself getting really into.",
+    helper: "Choose the one that sounds most naturally absorbing—not most career-relevant.",
     options: [
       {
-        id: "prototype",
-        label: "A working prototype",
-        detail: "I understand fastest when I can build, test, and improve something real.",
+        id: "customize",
+        label: "Building or customizing something",
+        detail: "Until it is exactly how I want it.",
         scores: even(4, 1, 0, 1),
       },
       {
-        id: "evidence",
-        label: "The evidence",
-        detail: "I want the data, the pattern, and the question behind the question.",
-        scores: even(0, 4, 1, 1),
-      },
-      {
-        id: "risk",
-        label: "The weak point",
-        detail: "I look for what could break, who it affects, and how to contain it.",
-        scores: even(1, 1, 4, 0),
-      },
-      {
-        id: "people",
-        label: "The people map",
-        detail: "I clarify the outcome, align stakeholders, and create the path forward.",
-        scores: even(1, 1, 0, 4),
-      },
-    ],
-  },
-  {
-    eyebrow: "Your best kind of progress",
-    prompt: "At the end of a strong workday, which win feels most satisfying?",
-    helper: "There is no universally better answer—only a better fit for your energy.",
-    options: [
-      {
-        id: "shipped",
-        label: "It shipped",
-        detail: "A useful feature now exists because I made the pieces work together.",
-        scores: even(4, 0, 1, 1),
-      },
-      {
-        id: "insight",
-        label: "The pattern clicked",
-        detail: "I turned confusing information into a decision people can act on.",
-        scores: even(0, 4, 0, 2),
-      },
-      {
-        id: "secured",
-        label: "The risk is contained",
-        detail: "I found a vulnerability or prevented a problem before it spread.",
-        scores: even(1, 1, 4, 0),
-      },
-      {
-        id: "aligned",
-        label: "Everyone is aligned",
-        detail: "A team left with clarity, ownership, and momentum.",
-        scores: even(0, 1, 0, 4),
-      },
-    ],
-  },
-  {
-    eyebrow: "The assignment you keep thinking about",
-    prompt: "Which junior-core moment are you most likely to get lost in?",
-    helper: "Imagine nobody is grading it and you can follow your curiosity.",
-    options: [
-      {
-        id: "app",
-        label: "Making the app feel complete",
-        detail: "The architecture, edge cases, and last 10% of polish pull me in.",
-        scores: even(4, 1, 0, 0),
-      },
-      {
-        id: "model",
-        label: "Testing one more model",
-        detail: "I want to know which signal matters and whether the result holds up.",
-        scores: even(1, 4, 0, 0),
-      },
-      {
-        id: "threat",
-        label: "Thinking like an attacker",
-        detail: "I enjoy tracing trust, permissions, and unintended paths through a system.",
-        scores: even(1, 1, 4, 0),
-      },
-      {
-        id: "scope",
-        label: "Turning ambiguity into a plan",
-        detail: "I like asking the questions that get a project unstuck.",
-        scores: even(0, 1, 0, 4),
-      },
-    ],
-  },
-  {
-    eyebrow: "Your default superpower",
-    prompt: "What do teammates already tend to rely on you for?",
-    helper: "Pick the compliment you hear in real life.",
-    options: [
-      {
-        id: "maker",
-        label: "Making it real",
-        detail: "I can turn an idea into something the team can actually use.",
-        scores: even(4, 1, 0, 1),
-      },
-      {
-        id: "sense",
-        label: "Making sense of it",
-        detail: "I notice patterns and explain what the evidence actually means.",
-        scores: even(0, 4, 1, 1),
-      },
-      {
-        id: "skeptic",
-        label: "Catching what others miss",
-        detail: "I test assumptions and find the failure mode hiding in the plan.",
-        scores: even(1, 1, 4, 0),
-      },
-      {
-        id: "translator",
-        label: "Bridging the room",
-        detail: "I help technical and business people understand each other.",
-        scores: even(1, 1, 0, 4),
-      },
-    ],
-  },
-  {
-    eyebrow: "Choose your hard problem",
-    prompt: "Which kind of difficulty would you willingly practice for a year?",
-    helper: "Every path has friction. The right friction can still feel worthwhile.",
-    options: [
-      {
-        id: "debug",
-        label: "Debugging the invisible",
-        detail: "Following a system until I can explain exactly why it behaves that way.",
-        scores: even(4, 1, 1, 0),
-      },
-      {
-        id: "uncertain",
-        label: "Deciding with imperfect data",
-        detail: "Separating signal from noise without pretending the answer is certain.",
-        scores: even(0, 4, 1, 1),
-      },
-      {
-        id: "adversary",
-        label: "Staying ahead of an adversary",
-        detail: "Learning continuously because the threat and the system both keep changing.",
-        scores: even(1, 1, 4, 0),
-      },
-      {
-        id: "tradeoffs",
-        label: "Owning the tradeoffs",
-        detail: "Balancing time, people, customer value, and technical constraints.",
+        id: "plan-experience",
+        label: "Planning a group experience",
+        detail: "Trips, events, or something everyone will remember.",
         scores: even(1, 0, 0, 4),
       },
-    ],
-  },
-  {
-    eyebrow: "The meeting invitation",
-    prompt: "Which conversation would you be most curious to join tomorrow?",
-    helper: "Assume all four teams are smart, kind, and doing meaningful work.",
-    options: [
       {
-        id: "architecture",
-        label: "Architecture review",
-        detail: "How should we design this so it stays reliable as usage grows?",
-        scores: even(4, 1, 1, 0),
+        id: "track-trends",
+        label: "Rankings, stats, or tracking trends",
+        detail: "Fantasy sports, comparisons, or watching a pattern develop.",
+        scores: even(0, 4, 1, 1),
       },
       {
-        id: "experiment",
-        label: "Experiment readout",
-        detail: "Did the change work, for whom, and what should we test next?",
-        scores: even(0, 4, 0, 1),
-      },
-      {
-        id: "incident",
-        label: "Incident debrief",
-        detail: "What happened, how did it get through, and how do we prevent a repeat?",
-        scores: even(1, 1, 4, 1),
-      },
-      {
-        id: "roadmap",
-        label: "Roadmap debate",
-        detail: "Which problem deserves the team’s next month of effort—and why?",
-        scores: even(1, 1, 0, 4),
+        id: "solve-mystery",
+        label: "Strategy games or mysteries",
+        detail: "Escape rooms, hidden clues, or figuring out what others missed.",
+        scores: even(1, 2, 4, 0),
       },
     ],
   },
   {
-    eyebrow: "The internship search",
-    prompt: "Which job-posting phrase makes you lean closer to the screen?",
-    helper: "Respond to the work itself, not the company name or salary.",
+    eyebrow: "Dinner decision",
+    prompt: "You and your friends are trying a new restaurant. How do you pick?",
+    helper: "Go with what you would really do when nobody has a strong preference.",
     options: [
       {
-        id: "systems",
-        label: "Design scalable systems",
-        detail: "Build and improve software used by real customers.",
+        id: "try-new",
+        label: "Find somewhere new",
+        detail: "Give it a shot and learn by trying it.",
+        scores: even(3, 1, 0, 1),
+      },
+      {
+        id: "group-agreement",
+        label: "Get everyone to agree",
+        detail: "Find a few good options and build consensus.",
+        scores: even(0, 1, 0, 4),
+      },
+      {
+        id: "compare-options",
+        label: "Compare the options",
+        detail: "Ratings, prices, distance, and reviews all go into the decision.",
+        scores: even(0, 4, 1, 2),
+      },
+      {
+        id: "check-red-flags",
+        label: "Check the bad reviews first",
+        detail: "I want to know whether there are any red flags.",
+        scores: even(0, 2, 4, 0),
+      },
+    ],
+  },
+  {
+    eyebrow: "A completely open Saturday",
+    prompt: "You have an entire Saturday with nothing scheduled. Which sounds best?",
+    helper: "Pick the version of unstructured time that gives you energy.",
+    options: [
+      {
+        id: "random-project",
+        label: "Start a random project",
+        detail: "Something I have been wanting to try or make.",
         scores: even(4, 1, 0, 0),
       },
       {
-        id: "questions",
-        label: "Answer high-impact questions",
-        detail: "Use SQL, visualization, and models to shape business decisions.",
-        scores: even(0, 4, 0, 1),
+        id: "group-outing",
+        label: "Go somewhere with friends",
+        detail: "The best version includes a group and a shared plan.",
+        scores: even(0, 0, 0, 4),
       },
       {
-        id: "defend",
-        label: "Defend critical systems",
-        detail: "Monitor, investigate, and reduce security risk.",
-        scores: even(1, 1, 4, 0),
+        id: "rabbit-hole",
+        label: "Go down a rabbit hole",
+        detail: "Follow a question until I understand something new.",
+        scores: even(1, 4, 1, 0),
       },
       {
-        id: "outcomes",
-        label: "Drive cross-functional outcomes",
-        detail: "Translate customer needs into plans a team can execute.",
-        scores: even(0, 1, 0, 4),
+        id: "nagging-problem",
+        label: "Figure out what is bothering me",
+        detail: "Finally trace the issue and get it resolved.",
+        scores: even(2, 1, 4, 0),
       },
     ],
   },
   {
-    eyebrow: "Your growth edge",
-    prompt: "Which skill would make you noticeably more confident by recruiting season?",
-    helper: "Your answer can reveal where motivation and opportunity overlap.",
+    eyebrow: "Game-night instinct",
+    prompt: "You are playing a board game you have never played before. What is most likely to be you?",
+    helper: "Choose the sentence you would actually say.",
     options: [
       {
-        id: "technical-depth",
-        label: "Deeper technical craft",
-        detail: "I want to design and explain production-quality software.",
-        scores: even(4, 1, 1, 0),
+        id: "learn-playing",
+        label: "“Let’s just start playing.”",
+        detail: "I will figure it out as we go.",
+        scores: even(4, 1, 0, 1),
       },
       {
-        id: "story-data",
-        label: "Stronger data stories",
-        detail: "I want analysis that changes a decision, not just fills a dashboard.",
+        id: "check-everyone",
+        label: "“Does everyone understand?”",
+        detail: "I want the whole group ready before we begin.",
+        scores: even(0, 0, 1, 4),
+      },
+      {
+        id: "find-strategy",
+        label: "“I think there’s a strategy here.”",
+        detail: "Give me a minute to find the pattern.",
+        scores: even(1, 4, 1, 0),
+      },
+      {
+        id: "challenge-rule",
+        label: "“Can you actually do that?”",
+        detail: "I want to check the rules before that move stands.",
+        scores: even(1, 1, 4, 0),
+      },
+    ],
+  },
+  {
+    eyebrow: "The chaotic group project",
+    prompt: "Nobody knows what they are doing. What do you do first?",
+    helper: "This one is intentionally ambiguous. Choose your first move, not your whole plan.",
+    options: [
+      {
+        id: "clarify-goal",
+        label: "Ask what we are solving",
+        detail: "Keep asking questions until the actual goal is clear.",
+        scores: even(0, 3, 3, 1),
+      },
+      {
+        id: "start-experiment",
+        label: "Start experimenting",
+        detail: "Make something small so the team has somewhere to begin.",
+        scores: even(3, 2, 0, 0),
+      },
+      {
+        id: "map-strengths",
+        label: "Figure out everyone’s strengths",
+        detail: "Then shape responsibilities around what people can contribute.",
+        scores: even(2, 0, 0, 4),
+      },
+      {
+        id: "find-examples",
+        label: "Find useful examples",
+        detail: "See how other people solved something similar.",
+        scores: even(3, 3, 1, 0),
+      },
+    ],
+  },
+  {
+    eyebrow: "Your friction radar",
+    prompt: "Which problem would bother you the most?",
+    helper: "Choose the one you would feel compelled to fix.",
+    options: [
+      {
+        id: "too-many-steps",
+        label: "Ten steps instead of two",
+        detail: "A process is far more complicated than it needs to be.",
+        scores: even(3, 1, 0, 2),
+      },
+      {
+        id: "no-owner",
+        label: "Nobody knows who owns what",
+        detail: "The work keeps drifting because responsibility is unclear.",
+        scores: even(0, 0, 1, 4),
+      },
+      {
+        id: "no-truth",
+        label: "Opinions without evidence",
+        detail: "Everyone has a take, but nobody knows what is true.",
+        scores: even(0, 4, 1, 1),
+      },
+      {
+        id: "mystery-failure",
+        label: "Something broke for no clear reason",
+        detail: "It is not working, and nobody knows why.",
+        scores: even(3, 1, 3, 0),
+      },
+    ],
+  },
+  {
+    eyebrow: "The LEGO test",
+    prompt: "You get a huge box of random LEGO pieces with no instructions. What sounds most like you?",
+    helper: "There is no right build. Follow your first instinct.",
+    options: [
+      {
+        id: "free-build",
+        label: "Start building",
+        detail: "See what takes shape once I begin.",
+        scores: even(4, 1, 0, 0),
+      },
+      {
+        id: "build-together",
+        label: "Build something bigger together",
+        detail: "Get a few people involved and combine what we can do.",
+        scores: even(1, 0, 0, 4),
+      },
+      {
+        id: "sort-pieces",
+        label: "Sort the pieces first",
+        detail: "I want to understand what I am working with.",
+        scores: even(0, 4, 1, 0),
+      },
+      {
+        id: "reverse-engineer",
+        label: "Reverse-engineer something",
+        detail: "Recreate a build I have seen by figuring out how it works.",
+        scores: even(2, 1, 4, 0),
+      },
+    ],
+  },
+  {
+    eyebrow: "The payoff",
+    prompt: "Which result would make you feel the most satisfied?",
+    helper: "Pick the sentence you would be happiest to say at the end.",
+    options: [
+      {
+        id: "made-that",
+        label: "“I made that.”",
+        detail: "Something useful exists because I built it.",
+        scores: even(4, 1, 0, 0),
+      },
+      {
+        id: "pulled-off",
+        label: "“We pulled that off.”",
+        detail: "A group succeeded because the pieces came together.",
+        scores: even(1, 0, 0, 4),
+      },
+      {
+        id: "figured-out",
+        label: "“I figured that out.”",
+        detail: "A confusing question finally makes sense.",
         scores: even(0, 4, 0, 1),
       },
       {
-        id: "security-instinct",
-        label: "Sharper security instincts",
-        detail: "I want to spot risks and explain them without spreading panic.",
-        scores: even(1, 1, 4, 1),
-      },
-      {
-        id: "influence",
-        label: "Influence without authority",
-        detail: "I want to lead clarity and momentum across different specialties.",
-        scores: even(0, 1, 0, 4),
+        id: "caught-that",
+        label: "“I caught that.”",
+        detail: "I noticed the thing that could have become a problem.",
+        scores: even(0, 1, 4, 0),
       },
     ],
   },
@@ -347,7 +348,7 @@ export const careers: Record<CareerId, CareerPath> = {
       { id: "build-story", label: "Two debugging stories", detail: "Explain symptoms, investigation, root cause, fix, and what you learned." },
       { id: "build-basics", label: "Core fundamentals refreshed", detail: "APIs, databases, testing, data structures, and one language you can use fluently." },
     ],
-    outlook: "16% projected growth for software developers, 2024–34",
+    outlook: "10% projected growth for software developers, 2025–35",
     sourceLabel: "U.S. Bureau of Labor Statistics",
     sourceUrl: "https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm",
     questions: [
@@ -431,7 +432,7 @@ export const careers: Record<CareerId, CareerPath> = {
       { id: "data-viz", label: "A decision-ready visualization", detail: "Readable at a glance and honest about scale, uncertainty, and context." },
       { id: "data-story", label: "Two impact stories", detail: "Moments when your evidence changed a team’s understanding or next step." },
     ],
-    outlook: "34% projected growth for data scientists, 2024–34",
+    outlook: "35% projected growth for data scientists, 2025–35",
     sourceLabel: "U.S. Bureau of Labor Statistics",
     sourceUrl: "https://www.bls.gov/ooh/math/data-scientists.htm",
     questions: [
@@ -515,7 +516,7 @@ export const careers: Record<CareerId, CareerPath> = {
       { id: "sec-risk", label: "A plain-language risk story", detail: "Explain likelihood, impact, and a proportionate recommendation." },
       { id: "sec-incident", label: "One incident walkthrough", detail: "Detection, triage, containment, recovery, and lessons learned." },
     ],
-    outlook: "29% projected growth for information security analysts, 2024–34",
+    outlook: "21% projected growth for information security analysts, 2025–35",
     sourceLabel: "U.S. Bureau of Labor Statistics",
     sourceUrl: "https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm",
     questions: [
@@ -599,9 +600,9 @@ export const careers: Record<CareerId, CareerPath> = {
       { id: "lead-artifact", label: "A crisp working artifact", detail: "One-page brief, process map, roadmap slice, or decision memo." },
       { id: "lead-tech", label: "Technical fluency examples", detail: "Times your systems understanding improved scope, risk, or communication." },
     ],
-    outlook: "A versatile bridge across technology, operations, and customer outcomes",
-    sourceLabel: "BYU Marriott Information Systems",
-    sourceUrl: "https://marriott.byu.edu/infosys/about/what-is-information-systems/at-a-glance/",
+    outlook: "7% projected growth for project management specialists, 2025–35",
+    sourceLabel: "U.S. Bureau of Labor Statistics",
+    sourceUrl: "https://www.bls.gov/ooh/business-and-financial/project-management-specialists.htm",
     questions: [
       {
         id: "lead-b1",
@@ -648,4 +649,3 @@ export const careers: Record<CareerId, CareerPath> = {
 };
 
 export const careerOrder: CareerId[] = ["build", "analyze", "protect", "lead"];
-

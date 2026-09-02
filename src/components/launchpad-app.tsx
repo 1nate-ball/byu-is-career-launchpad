@@ -7,11 +7,12 @@ import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
-  Blocks,
-  BrainCircuit,
+  BadgeCheck,
+  BriefcaseBusiness,
   Check,
   CheckCircle2,
   ChevronRight,
+  CircleDollarSign,
   Circle,
   Code2,
   Compass,
@@ -19,20 +20,22 @@ import {
   Gauge,
   GraduationCap,
   Lightbulb,
-  LockKeyhole,
+  ListChecks,
   Mic,
   MicOff,
   RefreshCw,
-  Route,
   ShieldCheck,
   Sparkles,
   Target,
   Timer,
+  TrendingUp,
   Users,
   Volume2,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { careers, careerOrder, quizQuestions, type CareerId } from "@/data/careers";
+import { byuPlacementUrl, careerResearch } from "@/data/career-research";
 import {
   analyzeInterviewAnswer,
   calculateMatches,
@@ -44,6 +47,8 @@ gsap.registerPlugin(useGSAP);
 
 type View = "home" | "quiz" | "reveal" | "dashboard" | "interview";
 type InterviewMode = "answer" | "feedback" | "summary";
+type CareerDetailTab = "work" | "recruiter" | "path";
+type InterviewFilter = "All" | "Technical" | "Behavioral";
 
 type SpeechResultEvent = {
   resultIndex: number;
@@ -77,8 +82,6 @@ const iconMap: Record<CareerId, LucideIcon> = {
   lead: Users,
 };
 
-const optionIconMap: LucideIcon[] = [Blocks, BrainCircuit, LockKeyhole, Route];
-
 const emptySubscribe = () => () => undefined;
 const getVoiceSupport = () => Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 const getServerVoiceSupport = () => false;
@@ -90,7 +93,7 @@ function readSavedState(): {
 } {
   if (typeof window === "undefined") return {};
   try {
-    const saved = window.localStorage.getItem("byu-is-launchpad-v1");
+    const saved = window.localStorage.getItem("byu-is-launchpad-v2");
     return saved ? JSON.parse(saved) : {};
   } catch {
     return {};
@@ -100,6 +103,12 @@ function readSavedState(): {
 function styleFor(accent: string): CSSProperties {
   return { "--accent": accent } as CSSProperties;
 }
+
+const formatCurrency = (value: number) => new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+}).format(value);
 
 function Brand({ compact = false, onClick }: { compact?: boolean; onClick?: () => void }) {
   return (
@@ -321,8 +330,6 @@ function QuizScreen({
         </div>
         <div className="option-grid" role="radiogroup" aria-labelledby="question-heading" data-enter>
           {question.options.map((option, index) => {
-            const OptionIcon = optionIconMap[index];
-            const career = careers[careerOrder[index]];
             const isSelected = selected === option.id;
             return (
               <button
@@ -331,10 +338,10 @@ function QuizScreen({
                 key={option.id}
                 onClick={() => onAnswer(option.id)}
                 role="radio"
-                style={styleFor(career.color)}
+                style={styleFor("#f2c76e")}
                 type="button"
               >
-                <span className="option-icon"><OptionIcon /></span>
+                <span className="option-icon" aria-hidden="true">{String.fromCharCode(65 + index)}</span>
                 <span className="option-copy"><strong>{option.label}</strong><span>{option.detail}</span></span>
                 <span className="option-check">{isSelected ? <Check /> : <Circle />}</span>
               </button>
@@ -461,8 +468,15 @@ function DashboardScreen({
   onRetake: () => void;
 }) {
   const career = careers[selectedCareerId];
+  const research = careerResearch[selectedCareerId];
   const Icon = iconMap[career.id];
   const completed = career.readiness.filter((item) => readiness[item.id]).length;
+  const [detailTab, setDetailTab] = useState<CareerDetailTab>("work");
+  const detailTabs: { id: CareerDetailTab; label: string; note: string; icon: LucideIcon }[] = [
+    { id: "work", label: "Real work", note: "What the day feels like", icon: BriefcaseBusiness },
+    { id: "recruiter", label: "Get hired", note: "What entry-level means", icon: ListChecks },
+    { id: "path", label: "Path ahead", note: "Growth and next steps", icon: TrendingUp },
+  ];
 
   return (
     <div className="dashboard-screen" style={styleFor(career.color)}>
@@ -476,6 +490,10 @@ function DashboardScreen({
               <div><p>The {career.signal}</p><h1>{career.title}</h1></div>
             </div>
             <p className="result-lede">{career.description}</p>
+            <div className="profile-focus">
+              <strong>Profiled role: {research.focusRole}</strong>
+              <span>{research.scopeNote}</span>
+            </div>
             <div className="role-pills" aria-label="Related roles">
               {career.roles.map((role) => <span key={role}>{role}</span>)}
             </div>
@@ -491,87 +509,188 @@ function DashboardScreen({
           </aside>
         </section>
 
-        <div className="tab-shell shell"><CareerTabs selected={selectedCareerId} onSelect={onSelectCareer} /></div>
+        <div className="tab-shell shell">
+          <CareerTabs
+            selected={selectedCareerId}
+            onSelect={(id) => {
+              setDetailTab("work");
+              onSelectCareer(id);
+            }}
+          />
+        </div>
 
-        <section className="workspace-section shell" aria-labelledby="work-heading">
-          <div className="section-heading" data-enter>
-            <div><p className="eyebrow">What the job is really like</p><h2 id="work-heading">A representative day—not a highlight reel.</h2></div>
-            <p>{career.tagline}</p>
-          </div>
-          <div className="work-grid">
-            <div className="day-card" data-enter>
-              <div className="card-heading"><span><Timer /></span><div><p>Day in the life</p><h3>How the work moves</h3></div></div>
-              <div className="day-timeline">
-                {career.dayInLife.map((item) => (
-                  <div className="day-item" key={item.time}>
-                    <time>{item.time}</time><span /><div><strong>{item.activity}</strong><p>{item.detail}</p></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rhythm-card" data-enter>
-              <div className="card-heading"><span><Gauge /></span><div><p>Work rhythm</p><h3>Where time and energy go</h3></div></div>
-              <div className="rhythm-bars">
-                {career.workModes.map((mode) => (
-                  <div key={mode.label}><div><span>{mode.label}</span><strong>{mode.value}%</strong></div><div className="rhythm-track"><span style={{ width: `${mode.value}%` }} /></div></div>
-                ))}
-              </div>
-              <p className="data-note">Illustrative mix; varies by company, team, and level.</p>
-            </div>
-            <div className="reality-card" data-enter>
-              <div className="card-heading"><span><Lightbulb /></span><div><p>Reality check</p><h3>The part job posts skip</h3></div></div>
-              <blockquote>{career.realityCheck}</blockquote>
-              <div className="friction-note"><strong>Likely friction</strong><p>{career.friction}</p></div>
-            </div>
-            <div className="conditions-card" data-enter>
-              <div className="card-heading"><span><Target /></span><div><p>Fit signals</p><h3>You may thrive when…</h3></div></div>
-              <ul>{career.thrivesWhen.map((item) => <li key={item}><CheckCircle2 />{item}</li>)}</ul>
-              <div className="outlook-line"><span>Market signal</span><strong>{career.outlook}</strong></div>
-              <a href={career.sourceUrl} target="_blank" rel="noreferrer">Source: {career.sourceLabel} <ExternalLink /></a>
-            </div>
-          </div>
-        </section>
-
-        <section className="byu-section" aria-labelledby="byu-heading">
-          <div className="shell">
-            <div className="section-heading light" data-enter>
-              <div><p className="eyebrow">Your BYU advantage</p><h2 id="byu-heading">Turn the junior core into recruiting evidence.</h2></div>
-              <p>You are already doing relevant work. The move is to package it around decisions, contribution, and impact.</p>
-            </div>
-            <div className="byu-moves">
-              {career.byuMoves.map((move, index) => (
-                <article data-enter key={move.title}>
-                  <span className="move-number">0{index + 1}</span><span className="move-tag">{move.tag}</span><h3>{move.title}</h3><p>{move.detail}</p>
-                </article>
-              ))}
-            </div>
-            <div className="byu-resource" data-enter>
-              <div><GraduationCap /><span><strong>Recruit with the official ecosystem, too.</strong><small>BYU Marriott’s Career Tools page points students to CareerLaunch, Handshake, placement data, and internship resources.</small></span></div>
-              <a href="https://marriott.byu.edu/infosys/careers/career-tools/" target="_blank" rel="noreferrer">Open BYU career tools <ExternalLink /></a>
-            </div>
-          </div>
-        </section>
-
-        <section className="readiness-section shell" aria-labelledby="ready-heading">
-          <div className="section-heading" data-enter>
-            <div><p className="eyebrow">Internship readiness</p><h2 id="ready-heading">Your next four proof points.</h2></div>
-            <div className="completion-pill"><strong>{completed}/{career.readiness.length}</strong><span>ready signals</span></div>
-          </div>
-          <div className="readiness-grid" data-enter>
-            {career.readiness.map((item) => {
-              const isDone = Boolean(readiness[item.id]);
+        <div className="detail-tab-shell">
+          <div className="detail-tabs shell" role="tablist" aria-label={`${research.focusRole} details`}>
+            {detailTabs.map((tab) => {
+              const TabIcon = tab.icon;
               return (
-                <button className={isDone ? "is-done" : ""} key={item.id} onClick={() => onToggleReadiness(item.id)} type="button">
-                  <span className="check-box">{isDone && <Check />}</span><span><strong>{item.label}</strong><small>{item.detail}</small></span>
+                <button
+                  aria-selected={detailTab === tab.id}
+                  className={detailTab === tab.id ? "is-active" : ""}
+                  key={tab.id}
+                  onClick={() => setDetailTab(tab.id)}
+                  role="tab"
+                  type="button"
+                >
+                  <TabIcon />
+                  <span><strong>{tab.label}</strong><small>{tab.note}</small></span>
                 </button>
               );
             })}
           </div>
-          <div className="practice-banner" data-enter>
-            <div><span className="practice-icon"><Volume2 /></span><div><p>Ready to make the story sound like you?</p><h3>Practice a real {career.shortTitle.toLowerCase()} question—out loud.</h3></div></div>
-            <button className="button button-light" type="button" onClick={onPractice}>Enter practice lab <ArrowRight /></button>
-          </div>
-        </section>
+        </div>
+
+        {detailTab === "work" && (
+          <section className="workspace-section shell" aria-labelledby="work-heading">
+            <div className="section-heading" data-enter>
+              <div><p className="eyebrow">What the job is really like</p><h2 id="work-heading">A representative day—not a highlight reel.</h2></div>
+              <p>{career.tagline}</p>
+            </div>
+            <div className="work-grid">
+              <div className="day-card" data-enter>
+                <div className="card-heading"><span><Timer /></span><div><p>Day in the life</p><h3>How the work moves</h3></div></div>
+                <div className="day-timeline">
+                  {career.dayInLife.map((item) => (
+                    <div className="day-item" key={item.time}>
+                      <time>{item.time}</time><span /><div><strong>{item.activity}</strong><p>{item.detail}</p></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rhythm-card" data-enter>
+                <div className="card-heading"><span><Gauge /></span><div><p>Work rhythm</p><h3>Where time and energy go</h3></div></div>
+                <div className="rhythm-bars">
+                  {career.workModes.map((mode) => (
+                    <div key={mode.label}><div><span>{mode.label}</span><strong>{mode.value}%</strong></div><div className="rhythm-track"><span style={{ width: `${mode.value}%` }} /></div></div>
+                  ))}
+                </div>
+                <p className="data-note">Illustrative mix; varies by company, team, and level.</p>
+              </div>
+              <div className="reality-card" data-enter>
+                <div className="card-heading"><span><Lightbulb /></span><div><p>Reality check</p><h3>The part job posts skip</h3></div></div>
+                <blockquote>{career.realityCheck}</blockquote>
+                <div className="friction-note"><strong>Likely friction</strong><p>{career.friction}</p></div>
+              </div>
+              <div className="conditions-card" data-enter>
+                <div className="card-heading"><span><Target /></span><div><p>Fit signals</p><h3>You may thrive when…</h3></div></div>
+                <ul>{research.traits.map((item) => <li key={item}><CheckCircle2 />{item}</li>)}</ul>
+                <div className="outlook-line"><span>Market signal</span><strong>{career.outlook}</strong></div>
+                <a href={career.sourceUrl} target="_blank" rel="noreferrer">Source: {career.sourceLabel} <ExternalLink /></a>
+              </div>
+            </div>
+            <details className="role-detail-list" data-enter>
+              <summary><span><Wrench /> See six common tasks for {research.focusRole}</span><ChevronRight /></summary>
+              <ul>{research.dailyReality.map((item) => <li key={item}>{item}</li>)}</ul>
+            </details>
+          </section>
+        )}
+
+        {detailTab === "recruiter" && (
+          <>
+            <section className="recruiter-section shell" aria-labelledby="recruiter-heading">
+              <div className="section-heading" data-enter>
+                <div><p className="eyebrow">The recruiter lens</p><h2 id="recruiter-heading">Know what “ready” actually means.</h2></div>
+                <p>Focus on credible junior evidence. You do not need to impersonate a mid-career candidate.</p>
+              </div>
+              <div className="recruiter-grid">
+                <article className="expectation-card" data-enter>
+                  <div className="card-heading"><span><CheckCircle2 /></span><div><p>Expected now</p><h3>Signals worth building</h3></div></div>
+                  <ul>{research.entryExpected.map((item) => <li key={item}><Check />{item}</li>)}</ul>
+                </article>
+                <article className="expectation-card is-muted" data-enter>
+                  <div className="card-heading"><span><Circle /></span><div><p>Not expected yet</p><h3>Pressure you can drop</h3></div></div>
+                  <ul>{research.notExpectedYet.map((item) => <li key={item}><Circle />{item}</li>)}</ul>
+                </article>
+                <article className="skills-card" data-enter>
+                  <div className="card-heading"><span><Wrench /></span><div><p>Technical toolkit</p><h3>Build toward fluency</h3></div></div>
+                  <div className="skill-chips">{research.skills.map((skill) => <span key={skill}>{skill}</span>)}</div>
+                </article>
+                <article className="salary-card" data-enter>
+                  <div className="card-heading"><span><CircleDollarSign /></span><div><p>Pay, with context</p><h3>Two numbers that are not interchangeable</h3></div></div>
+                  <div className="salary-comparison">
+                    <div><small>BYU BS IS, first jobs</small><strong>{formatCurrency(research.salary.byuMedian)}</strong><span>2025 median · all roles blended</span></div>
+                    <div><small>National occupation median</small><strong>{formatCurrency(research.salary.nationalMedian)}</strong><span>{research.salary.nationalRole} · all experience levels</span></div>
+                  </div>
+                  <p>{research.salary.caveat}</p>
+                  <div className="salary-links">
+                    <a href={byuPlacementUrl} target="_blank" rel="noreferrer">BYU placement data <ExternalLink /></a>
+                    <a href={research.salarySourceUrl} target="_blank" rel="noreferrer">BLS occupation data <ExternalLink /></a>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section className="byu-section" aria-labelledby="byu-heading">
+              <div className="shell">
+                <div className="section-heading light" data-enter>
+                  <div><p className="eyebrow">Your BYU advantage</p><h2 id="byu-heading">Turn the junior core into recruiting evidence.</h2></div>
+                  <p>You are already doing relevant work. The move is to package it around decisions, contribution, and impact.</p>
+                </div>
+                <div className="byu-moves">
+                  {career.byuMoves.map((move, index) => (
+                    <article data-enter key={move.title}>
+                      <span className="move-number">0{index + 1}</span><span className="move-tag">{move.tag}</span><h3>{move.title}</h3><p>{move.detail}</p>
+                    </article>
+                  ))}
+                </div>
+                <div className="byu-resource" data-enter>
+                  <div><GraduationCap /><span><strong>Recruit with the official ecosystem, too.</strong><small>BYU Marriott’s Career Tools page points students to CareerLaunch, Handshake, placement data, and internship resources.</small></span></div>
+                  <a href="https://marriott.byu.edu/infosys/careers/career-tools/" target="_blank" rel="noreferrer">Open BYU career tools <ExternalLink /></a>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
+        {detailTab === "path" && (
+          <>
+            <section className="path-ahead-section shell" aria-labelledby="path-ahead-heading">
+              <div className="section-heading" data-enter>
+                <div><p className="eyebrow">A possible path</p><h2 id="path-ahead-heading">See the next rung without locking in a ladder.</h2></div>
+                <p>Titles and timing vary. Use this as a conversation map, not a promise.</p>
+              </div>
+              <div className="progression-track" data-enter>
+                {research.progression.map((step, index) => (
+                  <article key={`${step.stage}-${step.years}`}>
+                    <span className="progression-number">{String(index + 1).padStart(2, "0")}</span>
+                    <small>{step.years}</small>
+                    <h3>{step.stage}</h3>
+                    <p>{step.focus}</p>
+                  </article>
+                ))}
+              </div>
+              <div className="credential-panel" data-enter>
+                <div className="credential-intro"><BadgeCheck /><div><p>Credentials, in context</p><h3>Useful when the timing is right</h3></div></div>
+                <div className="credential-grid">
+                  {research.credentials.map((credential) => (
+                    <article key={credential.name}><span>{credential.timing}</span><strong>{credential.name}</strong><p>{credential.note}</p></article>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="readiness-section shell" aria-labelledby="ready-heading">
+              <div className="section-heading" data-enter>
+                <div><p className="eyebrow">Internship readiness</p><h2 id="ready-heading">Your next four proof points.</h2></div>
+                <div className="completion-pill"><strong>{completed}/{career.readiness.length}</strong><span>ready signals</span></div>
+              </div>
+              <div className="readiness-grid" data-enter>
+                {career.readiness.map((item) => {
+                  const isDone = Boolean(readiness[item.id]);
+                  return (
+                    <button className={isDone ? "is-done" : ""} key={item.id} onClick={() => onToggleReadiness(item.id)} type="button">
+                      <span className="check-box">{isDone && <Check />}</span><span><strong>{item.label}</strong><small>{item.detail}</small></span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="practice-banner" data-enter>
+                <div><span className="practice-icon"><Volume2 /></span><div><p>Ready to make the story sound like you?</p><h3>Practice a real {career.shortTitle.toLowerCase()} question—out loud.</h3></div></div>
+                <button className="button button-light" type="button" onClick={onPractice}>Enter practice lab <ArrowRight /></button>
+              </div>
+            </section>
+          </>
+        )}
       </main>
       <SiteFooter />
     </div>
@@ -593,13 +712,16 @@ function InterviewScreen({
   const [answer, setAnswer] = useState("");
   const [analysis, setAnalysis] = useState<AnswerAnalysis | null>(null);
   const [mode, setMode] = useState<InterviewMode>("answer");
+  const [filter, setFilter] = useState<InterviewFilter>("All");
   const [scores, setScores] = useState<Record<string, number>>({});
   const [isListening, setIsListening] = useState(false);
   const voiceSupported = useSyncExternalStore(emptySubscribe, getVoiceSupport, getServerVoiceSupport);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const transcriptBaseRef = useRef("");
   const career = careers[selectedCareerId];
-  const question = career.questions[questionIndex];
+  const research = careerResearch[selectedCareerId];
+  const questions = filter === "All" ? research.questions : research.questions.filter((item) => item.type === filter);
+  const question = questions[questionIndex];
 
   useEffect(() => {
     return () => recognitionRef.current?.stop();
@@ -644,7 +766,7 @@ function InterviewScreen({
   }
 
   function nextQuestion() {
-    if (questionIndex === career.questions.length - 1) {
+    if (questionIndex === questions.length - 1) {
       setMode("summary");
       return;
     }
@@ -663,6 +785,16 @@ function InterviewScreen({
     setMode("answer");
   }
 
+  function selectFilter(nextFilter: InterviewFilter) {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+    setFilter(nextFilter);
+    setQuestionIndex(0);
+    setAnswer("");
+    setAnalysis(null);
+    setMode("answer");
+  }
+
   const averageScore = Math.round(Object.values(scores).reduce((sum, score) => sum + score, 0) / Math.max(Object.values(scores).length, 1));
 
   return (
@@ -676,11 +808,21 @@ function InterviewScreen({
 
         <CareerTabs selected={selectedCareerId} onSelect={onSelectCareer} />
 
+        <div className="interview-filters" aria-label="Filter practice questions">
+          {(["All", "Technical", "Behavioral"] as InterviewFilter[]).map((item) => (
+            <button className={filter === item ? "is-active" : ""} key={item} onClick={() => selectFilter(item)} type="button">
+              {item}
+              <span>{item === "All" ? research.questions.length : research.questions.filter((questionItem) => questionItem.type === item).length}</span>
+            </button>
+          ))}
+          <p><CheckCircle2 /> {Object.keys(scores).length} practiced</p>
+        </div>
+
         {mode !== "summary" ? (
           <section className="interview-workspace" data-enter>
             <aside className="question-rail">
               <p>Practice set</p>
-              {career.questions.map((item, index) => (
+              {questions.map((item, index) => (
                 <button
                   className={`${index === questionIndex ? "is-active" : ""} ${scores[item.id] ? "is-complete" : ""}`}
                   key={item.id}
@@ -693,14 +835,14 @@ function InterviewScreen({
                   type="button"
                 >
                   <span>{scores[item.id] ? <Check /> : index + 1}</span>
-                  <span><strong>{item.type}</strong><small>{item.prompt}</small></span>
+                  <span><strong className={`question-type is-${item.type.toLowerCase()}`}>{item.type}</strong><small>{item.prompt}</small></span>
                 </button>
               ))}
             </aside>
 
             <div className="practice-main">
               <div className="prompt-card">
-                <div className="prompt-meta"><span>{question.type}</span><span>Question {questionIndex + 1} of {career.questions.length}</span></div>
+                <div className="prompt-meta"><span className={`is-${question.type.toLowerCase()}`}>{question.type}</span><span>Question {questionIndex + 1} of {questions.length}</span></div>
                 <h2>{question.prompt}</h2>
                 <p><Lightbulb /> {question.why}</p>
               </div>
@@ -747,11 +889,11 @@ function InterviewScreen({
                   <div className="coach-note"><Lightbulb /><div><strong>One high-value edit</strong><p>{question.coachNote}</p></div></div>
                   <details className="answer-example">
                     <summary><span><Sparkles /> Compare with a strong answer</span><ChevronRight /></summary>
-                    <div><p>{question.strongAnswer}</p><small>Use the structure, not the wording. Your own evidence will sound more credible.</small></div>
+                    <div>{question.hasCode ? <pre>{question.strongAnswer}</pre> : <p>{question.strongAnswer}</p>}<small>Use the structure, not the wording. Your own evidence will sound more credible.</small></div>
                   </details>
                   <div className="feedback-actions">
                     <button className="button button-ghost" type="button" onClick={() => setMode("answer")}><RefreshCw /> Revise this answer</button>
-                    <button className="button button-primary" type="button" onClick={nextQuestion}>{questionIndex === career.questions.length - 1 ? "See practice summary" : "Next question"} <ArrowRight /></button>
+                    <button className="button button-primary" type="button" onClick={nextQuestion}>{questionIndex === questions.length - 1 ? "See practice summary" : "Next question"} <ArrowRight /></button>
                   </div>
                 </div>
               ) : null}
@@ -762,9 +904,9 @@ function InterviewScreen({
             <div className="summary-mark"><CheckCircle2 /></div>
             <p className="eyebrow centered">Practice set complete</p>
             <h2>Your {career.shortTitle.toLowerCase()} stories are taking shape.</h2>
-            <p>You completed {Object.keys(scores).length} role-specific questions with an average coaching signal of {averageScore}. Treat that number as a revision aid—not a hiring prediction.</p>
+            <p>You practiced {Object.keys(scores).length} of {research.questions.length} role-specific questions with an average coaching signal of {averageScore}. Treat that number as a revision aid—not a hiring prediction.</p>
             <div className="summary-scores">
-              {career.questions.map((item, index) => <div key={item.id}><span>{index + 1}. {item.type}</span><strong>{scores[item.id] ?? "—"}</strong></div>)}
+              {research.questions.map((item, index) => <div key={item.id}><span>{index + 1}. {item.type}</span><strong>{scores[item.id] ?? "—"}</strong></div>)}
             </div>
             <div className="summary-next"><strong>Before the real interview</strong><p>Choose your two strongest stories, say each once without notes, and ask a teammate whether your personal contribution and result are obvious.</p></div>
             <div className="summary-actions"><button className="button button-primary" type="button" onClick={restart}>Practice again <RefreshCw /></button><button className="button button-ghost" type="button" onClick={onExplore}>Back to career plan</button></div>
@@ -782,7 +924,7 @@ function SiteFooter() {
       <div className="shell">
         <Brand />
         <p>Student-built prototype for BYU Information Systems. Career matches are exploration prompts, not assessments or guarantees.</p>
-        <div><a href="https://marriott.byu.edu/infosys/" target="_blank" rel="noreferrer">BYU Information Systems <ExternalLink /></a><span>Prototype v1</span></div>
+        <div><a href="https://marriott.byu.edu/infosys/" target="_blank" rel="noreferrer">BYU Information Systems <ExternalLink /></a><span>Research build v2</span></div>
       </div>
     </footer>
   );
@@ -806,7 +948,7 @@ export default function LaunchpadApp() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem("byu-is-launchpad-v1", JSON.stringify({ answers, selectedCareerId, readiness }));
+      window.localStorage.setItem("byu-is-launchpad-v2", JSON.stringify({ answers, selectedCareerId, readiness }));
     } catch {
       // See note above: persistence is an enhancement, not a requirement.
     }

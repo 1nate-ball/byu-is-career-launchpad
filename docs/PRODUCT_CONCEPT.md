@@ -19,7 +19,7 @@ These are starting hypotheses, not personality labels. Every result keeps all fo
 
 - **One question at a time.** The [GOV.UK Design System question-page pattern](https://design-system.service.gov.uk/patterns/question-pages/) recommends this structure to reduce cognitive load and maintain focus. We use a simple “Question 3 of 8” indicator, a visible back control, and an explicit Continue action.
 - **A reveal with immediate utility.** The cinematic moment creates emotional salience, then quickly translates the archetype into real titles, work patterns, friction, and action.
-- **Progressive disclosure.** The dashboard reveals detail by task: first the role summary, then the real work, then BYU preparation, then readiness, then interview practice.
+- **Progressive disclosure.** The dashboard separates detail into three user-chosen views: real work, getting hired, and the path ahead. Rich research stays available without becoming one wall of text.
 - **Motion with a job.** GSAP handles scene entrances, the signal orbit, and the result reveal. Motion is brief and tied to state changes. `gsap.matchMedia()` and CSS honor `prefers-reduced-motion`, consistent with [GSAP guidance](https://gsap.com/docs/v3/GSAP/gsap.matchMedia%28%29/) and [W3C technique C39](https://www.w3.org/WAI/WCAG21/Techniques/css/C39.html).
 - **Voice without fragility.** The browser [SpeechRecognition API](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition) is not supported everywhere, so the same coaching workflow always works by typing. Voice is enabled only after capability detection.
 - **Transparent coaching.** The MVP does not pretend to be AI. It checks answer depth, structure, specificity, focused length, and role language, then shows its evidence and a human-readable rubric.
@@ -39,7 +39,7 @@ The implementation is approximately 70% professional and 30% playful. BYU navy, 
 
 ## Assessment model
 
-Eight situational questions score preferences across four dimensions: build, analyze, protect, and lead. Each option contributes a small transparent weight to every path. Percentages are normalized for a readable comparative display and deliberately avoid claims of psychometric validity.
+Eight lifestyle and situational questions score preferences across four dimensions: build, analyze, protect, and lead. Options intentionally contribute to multiple paths so the result is harder to game and adjacent interests stay visible. Percentages are normalized for a readable comparative display and deliberately avoid claims of psychometric validity.
 
 The current question set is a strong MVP content model. A later research pass could validate wording with:
 
@@ -55,12 +55,14 @@ The role descriptions and work framing are grounded in current public career dat
 - [BYU Marriott: Information Systems at a Glance](https://marriott.byu.edu/infosys/about/what-is-information-systems/at-a-glance/)
 - [BYU Marriott: BS Information Systems Program Overview](https://marriott.byu.edu/infosys/bsis/what-will-i-study/program-overview/)
 - [BYU Marriott: Career Tools](https://marriott.byu.edu/infosys/careers/career-tools/)
+- [BYU Marriott: BS IS Career Placement, Class of 2025](https://marriott.byu.edu/infosys/careers/placement-profile/bsis/)
 - [BLS: Software Developers](https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm)
 - [BLS: Data Scientists](https://www.bls.gov/ooh/math/data-scientists.htm)
 - [BLS: Information Security Analysts](https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm)
+- [BLS: Project Management Specialists](https://www.bls.gov/ooh/business-and-financial/project-management-specialists.htm)
 - [O*NET: Information Security Analysts](https://www.onetonline.org/link/details/15-1212.00)
 
-Team research should replace or extend the starter content in `src/data/careers.ts`; the interface should not need to be rebuilt.
+Team research is normalized in `src/data/career-research.ts`. The product names the specifically profiled role inside each broad path so adjacent titles are not presented as if they share identical work or hiring criteria.
 
 ## Scope decisions for the MVP
 
@@ -84,4 +86,4 @@ Deferred deliberately:
 - Video recording
 - Recruiter or advisor dashboards
 
-The next high-value enhancement is not more surface area. It is replacing starter career content with the team’s validated research and testing whether students understand why they matched a path.
+The next high-value step is testing the question wording and role guidance with current juniors, alumni, and recruiters—then tightening any content they misread before adding more surface area.

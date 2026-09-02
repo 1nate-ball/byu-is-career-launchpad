@@ -7,9 +7,10 @@ A polished, browser-based career discovery and interview practice MVP for BYU In
 - An eight-question, one-question-at-a-time career signal
 - Four IS paths: Software Development, Data & Analytics, Cybersecurity, and Product & Project
 - A ranked fit result with an animated reveal
-- Honest role previews: representative day, work rhythm, likely friction, and related titles
+- Three focused role views: real work, recruiter expectations, and the path ahead
+- Contextual salary benchmarks that keep BYU first-job data separate from national all-experience medians
 - BYU junior-core preparation moves and persistent internship-readiness checklists
-- Sixteen role-specific interview questions: two behavioral and two technical per path
+- Twenty-four researched interview questions: three behavioral and three technical per path
 - Typed answers plus progressive-enhancement voice dictation through the browser Speech Recognition API
 - Deterministic answer coaching, role criteria, strong-answer comparisons, and a practice-set summary
 - Responsive desktop/mobile layouts and reduced-motion support
@@ -36,10 +37,16 @@ The project intentionally uses webpack for local development and production buil
 
 ## Edit the career content
 
-All assessment, career, checklist, and interview content lives in:
+The assessment, broad career framing, and BYU readiness content lives in:
 
 ```text
 src/data/careers.ts
+```
+
+The teammate-informed role research, salary context, progression, credentials, and interview bank lives in:
+
+```text
+src/data/career-research.ts
 ```
 
 The scoring and local interview feedback logic lives in:
