@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BYU IS Career Launchpad
 
-## Getting Started
+A polished, browser-based career discovery and interview practice MVP for BYU Information Systems juniors preparing for recruiting.
 
-First, run the development server:
+## What is included
+
+- An eight-question, one-question-at-a-time career signal
+- Four IS paths: Software Development, Data & Analytics, Cybersecurity, and Product & Project
+- A ranked fit result with an animated reveal
+- Honest role previews: representative day, work rhythm, likely friction, and related titles
+- BYU junior-core preparation moves and persistent internship-readiness checklists
+- Sixteen role-specific interview questions: two behavioral and two technical per path
+- Typed answers plus progressive-enhancement voice dictation through the browser Speech Recognition API
+- Deterministic answer coaching, role criteria, strong-answer comparisons, and a practice-set summary
+- Responsive desktop/mobile layouts and reduced-motion support
+
+No database, account, environment variable, or paid AI API is required for the MVP.
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Verify
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+The project intentionally uses webpack for local development and production builds. This keeps builds reliable in restricted environments where Turbopack cannot open its internal helper port.
 
-To learn more about Next.js, take a look at the following resources:
+## Edit the career content
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All assessment, career, checklist, and interview content lives in:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+src/data/careers.ts
+```
+
+The scoring and local interview feedback logic lives in:
+
+```text
+src/lib/scoring.ts
+```
+
+The data is typed, so malformed additions are caught during `npm run build`. See `docs/PRODUCT_CONCEPT.md` for the content model and research rationale.
+
+## Voice support
+
+Voice dictation is an enhancement, not a dependency. The practice lab detects browser support and enables **Answer with voice** where `SpeechRecognition` is available. Chrome-family browsers currently provide the most reliable demo experience. Other browsers retain the complete typed-answer flow.
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push this directory to a GitHub repository.
+2. Import the repository in Vercel.
+3. Keep the detected framework as **Next.js**.
+4. No environment variables or build overrides are required.
+5. Deploy.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Important positioning
+
+This is a student-built exploration tool, not an official BYU advising product or a validated psychometric assessment. Fit percentages are intentionally framed as hypotheses to investigate through projects and conversations—not as hiring predictions or permanent labels.
