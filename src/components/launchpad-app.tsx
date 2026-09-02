@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import Image from "next/image";
 import {
   ArrowLeft,
   ArrowRight,
@@ -104,6 +105,52 @@ function styleFor(accent: string): CSSProperties {
   return { "--accent": accent } as CSSProperties;
 }
 
+const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+const questionScenes = [
+  { src: `${publicBasePath}/art/quiz-curiosity.webp`, label: "Curiosity", note: "Notice what holds your attention." },
+  { src: `${publicBasePath}/art/quiz-choice.webp`, label: "Choice", note: "Your process leaves a trail." },
+  { src: `${publicBasePath}/art/quiz-curiosity.webp`, label: "Energy", note: "Free time tells the truth rather well." },
+  { src: `${publicBasePath}/art/quiz-strategy.webp`, label: "Instinct", note: "Every new game reveals a first move." },
+  { src: `${publicBasePath}/art/quiz-collaboration.webp`, label: "Clarity", note: "Order often begins with one useful question." },
+  { src: `${publicBasePath}/art/quiz-clarity.webp`, label: "Friction", note: "What bothers you may point toward what you improve." },
+  { src: `${publicBasePath}/art/quiz-making.webp`, label: "Making", note: "Start with the pieces. See what wants to become." },
+  { src: `${publicBasePath}/art/quiz-making.webp`, label: "Satisfaction", note: "The best work leaves a particular sort of joy." },
+];
+
+function CareerSigil({ id }: { id: CareerId }) {
+  if (id === "build") {
+    return (
+      <svg className="career-sigil" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M24 13 10 26v12l14 13M40 13l14 13v12L40 51M36 9 28 55" />
+        <circle cx="32" cy="32" r="4" />
+      </svg>
+    );
+  }
+  if (id === "analyze") {
+    return (
+      <svg className="career-sigil" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M11 50h42M17 45V34M29 45V25M41 45V16M13 25l15-9 12 6 12-11" />
+        <circle cx="13" cy="25" r="3" /><circle cx="28" cy="16" r="3" /><circle cx="40" cy="22" r="3" /><circle cx="52" cy="11" r="3" />
+      </svg>
+    );
+  }
+  if (id === "protect") {
+    return (
+      <svg className="career-sigil" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 7 51 15v15c0 13-8 22-19 27C21 52 13 43 13 30V15l19-8Z" />
+        <path d="m21 32 7 7 15-17M32 7v9" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="career-sigil" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="7" /><circle cx="32" cy="10" r="5" /><circle cx="53" cy="32" r="5" /><circle cx="32" cy="54" r="5" /><circle cx="11" cy="32" r="5" />
+      <path d="M32 15v10M48 32H39M32 39v10M25 32h-9M18 18l9 9M46 18l-9 9M46 46l-9-9M18 46l9-9" />
+    </svg>
+  );
+}
+
 const formatCurrency = (value: number) => new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -120,9 +167,9 @@ function Brand({ compact = false, onClick }: { compact?: boolean; onClick?: () =
         onClick?.();
       }}
     >
-      <span className="brand-mark" aria-hidden="true">Y</span>
+      <span className="brand-mark" aria-hidden="true"><span>IS</span></span>
       <span className="brand-copy">
-        <strong>BYU IS</strong>
+        <strong>BYU&nbsp; IS</strong>
         {!compact && <span>Career Launchpad</span>}
       </span>
     </button>
@@ -167,14 +214,13 @@ function SignalVisual({ active = "build", compact = false }: { active?: CareerId
         <span>IS</span>
       </div>
       {careerOrder.map((careerId, index) => {
-        const Icon = iconMap[careerId];
         return (
           <div
             className={`signal-node signal-node-${index + 1} ${active === careerId ? "is-active" : ""}`}
             key={careerId}
             style={styleFor(careers[careerId].color)}
           >
-            <Icon />
+            <CareerSigil id={careerId} />
           </div>
         );
       })}
@@ -200,14 +246,14 @@ function HomeScreen({
       <main>
         <section className="hero shell">
           <div className="hero-copy" data-enter>
-            <p className="eyebrow"><span /> Built for BYU IS junior recruiting</p>
-            <h1>Find the IS work that fits how you think.</h1>
+            <p className="eyebrow"><span /> For BYU IS students stepping toward recruiting</p>
+            <h1>Find the work you may be brilliant at.</h1>
             <p className="hero-lede">
-              An interactive career signal that turns your instincts into a promising role, an honest preview of the work, and a focused plan for recruiting.
+              There is more than one worthy way to build a life in IS. Follow eight everyday instincts; we will help you name a promising direction, see the real work, and take one sensible next step.
             </p>
             <div className="hero-actions">
               <button className="button button-primary" type="button" onClick={onStart}>
-                Find my career signal <ArrowRight />
+                Begin the signal <ArrowRight />
               </button>
               <button className="button button-ghost" type="button" onClick={onExplore}>
                 Browse the four paths
@@ -220,10 +266,11 @@ function HomeScreen({
             </div>
           </div>
           <div className="hero-art" data-enter>
+            <div className="hero-field-note" aria-hidden="true"><span>DISCOVER</span><span>PREPARE</span><span>PRACTISE</span></div>
             <p className="visual-kicker">Your signal is waiting</p>
             <SignalVisual active="analyze" />
             <div className="visual-caption">
-              <Sparkles /> Four paths. One place to start.
+              <Sparkles /> Clarity often begins as curiosity.
             </div>
           </div>
         </section>
@@ -232,25 +279,25 @@ function HomeScreen({
           <div className="section-heading" data-enter>
             <div>
               <p className="eyebrow">The IS landscape</p>
-              <h2 id="paths-heading">Different work. Shared foundation.</h2>
+              <h2 id="paths-heading">Four directions. Plenty of room to become.</h2>
             </div>
-            <p>Explore the broad directions BYU IS students recruit into, then use the signal to learn where your energy may fit best.</p>
+            <p>Explore the broad directions BYU IS students recruit into. None is a box; each is a useful place to begin testing your energy.</p>
           </div>
           <div className="path-grid">
             {careerOrder.map((careerId, index) => {
               const career = careers[careerId];
-              const Icon = iconMap[careerId];
               return (
                 <button
                   className="path-card"
                   data-enter
+                  data-path={`0${index + 1}`}
                   key={careerId}
                   onClick={() => onSelectCareer(careerId)}
                   style={styleFor(career.color)}
                   type="button"
                 >
                   <span className="path-number">0{index + 1}</span>
-                  <span className="path-icon"><Icon /></span>
+                  <span className="path-icon"><CareerSigil id={careerId} /></span>
                   <span className="path-signal">The {career.signal}</span>
                   <strong>{career.title}</strong>
                   <span className="path-tagline">{career.tagline}</span>
@@ -264,11 +311,11 @@ function HomeScreen({
         <section className="how-it-works shell" aria-labelledby="how-heading">
           <div className="how-panel" data-enter>
             <div>
-              <p className="eyebrow">Not another personality test</p>
-              <h2 id="how-heading">A direction, plus the receipts.</h2>
+              <p className="eyebrow">Not a verdict</p>
+              <h2 id="how-heading">A gracious place to begin.</h2>
             </div>
             <div className="how-steps">
-              <div><span>01</span><strong>Notice your pattern</strong><p>Eight situational choices surface how you prefer to solve problems.</p></div>
+              <div><span>01</span><strong>Notice your pattern</strong><p>Eight ordinary choices surface the ways you naturally solve problems.</p></div>
               <div><span>02</span><strong>Meet the real work</strong><p>See a representative day, the friction, and related entry-level roles.</p></div>
               <div><span>03</span><strong>Move this week</strong><p>Turn junior-core work into evidence, check readiness, and rehearse aloud.</p></div>
             </div>
@@ -277,8 +324,8 @@ function HomeScreen({
 
         <section className="home-cta shell" data-enter>
           <div>
-            <p className="eyebrow">Recruiting gets easier with a target</p>
-            <h2>Start with curiosity. Leave with a plan.</h2>
+            <p className="eyebrow">You need not have the whole map</p>
+            <h2>Begin with one good next step.</h2>
           </div>
           <button className="button button-light" type="button" onClick={onStart}>
             Find my signal <ArrowRight />
@@ -306,6 +353,7 @@ function QuizScreen({
   onExit: () => void;
 }) {
   const question = quizQuestions[questionIndex];
+  const scene = questionScenes[questionIndex];
   const selected = answers[questionIndex];
   const progress = ((questionIndex + 1) / quizQuestions.length) * 100;
 
@@ -321,37 +369,46 @@ function QuizScreen({
       <div className="quiz-progress" aria-label={`Question ${questionIndex + 1} of ${quizQuestions.length}`}>
         <span style={{ width: `${progress}%` }} />
       </div>
-      <section className="quiz-stage shell-narrow" aria-labelledby="question-heading">
-        <div className="quiz-intro" data-enter>
-          <p className="question-count">Question {questionIndex + 1} of {quizQuestions.length}</p>
-          <p className="eyebrow centered">{question.eyebrow}</p>
-          <h1 id="question-heading">{question.prompt}</h1>
-          <p>{question.helper}</p>
+      <section className="quiz-stage shell" aria-labelledby="question-heading">
+        <div className="quiz-scene" data-scene>
+          <Image src={scene.src} alt="" fill priority sizes="(max-width: 900px) 100vw, 42vw" />
+          <div className="quiz-scene-shade" />
+          <div className="quiz-scene-index" aria-hidden="true">0{questionIndex + 1}</div>
+          <div className="quiz-scene-caption"><span>{scene.label}</span><p>{scene.note}</p></div>
         </div>
-        <div className="option-grid" role="radiogroup" aria-labelledby="question-heading" data-enter>
-          {question.options.map((option, index) => {
-            const isSelected = selected === option.id;
-            return (
-              <button
-                aria-checked={isSelected}
-                className={`option-card ${isSelected ? "is-selected" : ""}`}
-                key={option.id}
-                onClick={() => onAnswer(option.id)}
-                role="radio"
-                style={styleFor("#f2c76e")}
-                type="button"
-              >
-                <span className="option-icon" aria-hidden="true">{String.fromCharCode(65 + index)}</span>
-                <span className="option-copy"><strong>{option.label}</strong><span>{option.detail}</span></span>
-                <span className="option-check">{isSelected ? <Check /> : <Circle />}</span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="quiz-actions" data-enter>
-          <button className="button button-primary" disabled={!selected} type="button" onClick={onContinue}>
-            {questionIndex === quizQuestions.length - 1 ? "Reveal my signal" : "Continue"} <ArrowRight />
-          </button>
+        <div className="quiz-question-panel">
+          <div className="quiz-intro" data-enter>
+            <p className="question-count">Question {questionIndex + 1} of {quizQuestions.length}</p>
+            <p className="eyebrow">{question.eyebrow}</p>
+            <h1 id="question-heading">{question.prompt}</h1>
+            <p>{question.helper}</p>
+          </div>
+          <div className="option-grid" role="radiogroup" aria-labelledby="question-heading" data-enter>
+            {question.options.map((option, index) => {
+              const isSelected = selected === option.id;
+              return (
+                <button
+                  aria-checked={isSelected}
+                  className={`option-card ${isSelected ? "is-selected" : ""}`}
+                  key={option.id}
+                  onClick={() => onAnswer(option.id)}
+                  role="radio"
+                  style={styleFor("#f2c76e")}
+                  type="button"
+                >
+                  <span className="option-icon" aria-hidden="true">{String.fromCharCode(65 + index)}</span>
+                  <span className="option-copy"><strong>{option.label}</strong><span>{option.detail}</span></span>
+                  <span className="option-check">{isSelected ? <Check /> : <Circle />}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="quiz-actions" data-enter>
+            <span>Trust the answer that feels most like Tuesday, not your best day.</span>
+            <button className="button button-primary" disabled={!selected} type="button" onClick={onContinue}>
+              {questionIndex === quizQuestions.length - 1 ? "Reveal my signal" : "Continue"} <ArrowRight />
+            </button>
+          </div>
         </div>
       </section>
       <div className="quiz-glow quiz-glow-left" />
@@ -391,7 +448,6 @@ function RevealScreen({
   onRetake: () => void;
 }) {
   const winner = careers[matches[0].id];
-  const Icon = iconMap[winner.id];
 
   return (
     <main className="reveal-screen" style={styleFor(winner.color)}>
@@ -401,8 +457,8 @@ function RevealScreen({
           <SignalVisual active={winner.id} compact />
         </div>
         <div className="reveal-copy" data-enter>
-          <p className="eyebrow centered"><Sparkles /> Your strongest signal</p>
-          <div className="reveal-icon"><Icon /></div>
+          <p className="eyebrow centered"><Sparkles /> A promising direction</p>
+          <div className="reveal-icon reveal-sigil"><CareerSigil id={winner.id} /></div>
           <h1>The {winner.signal}</h1>
           <p className="reveal-role">{winner.title}</p>
           <p className="reveal-tagline">{winner.tagline}</p>
@@ -410,7 +466,7 @@ function RevealScreen({
         </div>
         <div className="reveal-matches" data-enter>
           <MatchBars matches={matches} />
-          <p>This is a direction to investigate, not a box. Your full result keeps the adjacent paths visible.</p>
+          <p>This is an invitation to investigate, not a box to live in. Your adjacent paths remain part of the picture.</p>
         </div>
         <div className="reveal-actions" data-enter>
           <button className="button button-light" type="button" onClick={onContinue}>Open my game plan <ArrowRight /></button>
@@ -469,7 +525,6 @@ function DashboardScreen({
 }) {
   const career = careers[selectedCareerId];
   const research = careerResearch[selectedCareerId];
-  const Icon = iconMap[career.id];
   const completed = career.readiness.filter((item) => readiness[item.id]).length;
   const [detailTab, setDetailTab] = useState<CareerDetailTab>("work");
   const detailTabs: { id: CareerDetailTab; label: string; note: string; icon: LucideIcon }[] = [
@@ -486,7 +541,7 @@ function DashboardScreen({
           <div className="result-heading" data-enter>
             <p className="eyebrow"><span /> Career path workspace</p>
             <div className="result-title-row">
-              <span className="result-icon"><Icon /></span>
+              <span className="result-icon"><CareerSigil id={career.id} /></span>
               <div><p>The {career.signal}</p><h1>{career.title}</h1></div>
             </div>
             <p className="result-lede">{career.description}</p>
@@ -802,7 +857,7 @@ function InterviewScreen({
       <AppHeader view="interview" onHome={onHome} onExplore={onExplore} onPractice={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
       <main className="interview-shell shell">
         <section className="practice-header" data-enter>
-          <div><p className="eyebrow"><span /> Interview practice lab</p><h1>Build an answer you can trust under pressure.</h1><p>Role-specific prompts, a useful coaching rubric, and a strong-answer comparison—without pretending a word count is human judgment.</p></div>
+          <div><p className="eyebrow"><span /> Interview practice studio</p><h1>Practise until your answer sounds like you.</h1><p>Use role-specific prompts, a clear coaching rubric, and strong-answer comparisons to make your own evidence easier to hear under pressure.</p></div>
           <div className="practice-status"><span><Mic /> {voiceSupported ? "Voice ready" : "Typing ready"}</span><span><Target /> {career.shortTitle} track</span></div>
         </section>
 
@@ -974,10 +1029,12 @@ export default function LaunchpadApp() {
             { opacity: 1, y: 0, duration: reduceMotion ? 0.01 : 0.72, stagger: reduceMotion ? 0 : 0.07, ease: "power3.out", clearProps: "transform" },
           );
           if (!reduceMotion) {
+            gsap.fromTo("[data-scene] img", { scale: 1.08, opacity: 0.55 }, { scale: 1, opacity: 1, duration: 1.2, ease: "power3.out" });
             gsap.to(".signal-halo-one", { rotate: 360, duration: 36, repeat: -1, ease: "none" });
             gsap.to(".signal-halo-two", { rotate: -360, duration: 48, repeat: -1, ease: "none" });
             gsap.to(".signal-scan", { rotate: 360, duration: 8, repeat: -1, ease: "none" });
             gsap.fromTo(".reveal-icon", { scale: 0.72, rotate: -8 }, { scale: 1, rotate: 0, duration: 1, ease: "elastic.out(1, 0.55)" });
+            gsap.fromTo(".reveal-copy h1", { letterSpacing: "0.02em", opacity: 0 }, { letterSpacing: "-0.055em", opacity: 1, duration: 1.1, ease: "power3.out" });
           }
         },
         rootRef,

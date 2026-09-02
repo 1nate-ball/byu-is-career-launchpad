@@ -2,6 +2,12 @@
 
 A polished, browser-based career discovery and interview practice MVP for BYU Information Systems juniors preparing for recruiting.
 
+## Live site
+
+[Open the BYU IS Career Launchpad](https://1nate-ball.github.io/byu-is-career-launchpad/)
+
+The public site is rebuilt automatically by GitHub Actions whenever `main` is updated.
+
 ## What is included
 
 - An eight-question, one-question-at-a-time career signal
@@ -61,13 +67,9 @@ The data is typed, so malformed additions are caught during `npm run build`. See
 
 Voice dictation is an enhancement, not a dependency. The practice lab detects browser support and enables **Answer with voice** where `SpeechRecognition` is available. Chrome-family browsers currently provide the most reliable demo experience. Other browsers retain the complete typed-answer flow.
 
-## Deploy on Vercel
+## GitHub Pages deployment
 
-1. Push this directory to a GitHub repository.
-2. Import the repository in Vercel.
-3. Keep the detected framework as **Next.js**.
-4. No environment variables or build overrides are required.
-5. Deploy.
+The app uses Next.js static export and deploys through `.github/workflows/deploy-pages.yml`. GitHub supplies the repository base path during the build, so local development remains available at `/` while the published site works at `/byu-is-career-launchpad/`.
 
 ## Important positioning
 
