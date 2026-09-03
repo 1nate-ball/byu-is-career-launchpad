@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -49,7 +50,7 @@ import {
   type QuizAnswers,
 } from "@/lib/scoring";
 
-gsap.registerPlugin(useGSAP);
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 type View = "home" | "quiz" | "reveal" | "dashboard" | "trial" | "interview";
 type InterviewMode = "answer" | "feedback" | "summary";
@@ -251,6 +252,26 @@ function SignalVisual({ active = "build", compact = false }: { active?: CareerId
   );
 }
 
+function CareerObservatory() {
+  return (
+    <div className="career-observatory" aria-hidden="true">
+      <div className="observatory-aura" />
+      <div className="observatory-orbit observatory-orbit-one" />
+      <div className="observatory-orbit observatory-orbit-two" />
+      <Image
+        className="career-observatory-image"
+        src={`${publicBasePath}/art/career-observatory.webp`}
+        alt=""
+        width={1200}
+        height={800}
+        sizes="(max-width: 900px) 94vw, 50vw"
+        preload
+      />
+      <div className="observatory-sweep" />
+    </div>
+  );
+}
+
 function HomeScreen({
   onStart,
   onExplore,
@@ -285,7 +306,7 @@ function HomeScreen({
             </div>
           </div>
           <div className="hero-art" data-enter>
-            <SignalVisual active="analyze" />
+            <CareerObservatory />
           </div>
         </section>
 
@@ -303,7 +324,7 @@ function HomeScreen({
               return (
                 <button
                   className="path-card"
-                  data-enter
+                  data-scroll-enter
                   data-path={`0${index + 1}`}
                   key={careerId}
                   onClick={() => onSelectCareer(careerId)}
@@ -322,7 +343,7 @@ function HomeScreen({
           </div>
         </section>
 
-        <section className="home-cta shell" data-enter>
+        <section className="home-cta shell" data-scroll-enter>
           <div>
             <p className="eyebrow">You need not have the whole map</p>
             <h2>Begin with one good next step.</h2>
@@ -1387,6 +1408,33 @@ export default function LaunchpadApp() {
           );
           if (!reduceMotion) {
             gsap.fromTo("[data-scene] img", { scale: 1.08, opacity: 0.55 }, { scale: 1, opacity: 1, duration: 1.2, ease: "power3.out" });
+            gsap.fromTo(
+              ".career-observatory-image",
+              { opacity: 0, scale: 0.82, rotate: -2, filter: "blur(10px)" },
+              { opacity: 1, scale: 1, rotate: 0, filter: "blur(0px)", duration: 1.35, ease: "power3.out" },
+            );
+            gsap.to(".career-observatory-image", { y: -10, duration: 5.5, repeat: -1, yoyo: true, ease: "sine.inOut" });
+            gsap.to(".observatory-orbit-one", { rotate: 360, duration: 32, repeat: -1, ease: "none" });
+            gsap.to(".observatory-orbit-two", { rotate: -360, duration: 46, repeat: -1, ease: "none" });
+            gsap.to(".observatory-aura", { opacity: 0.82, scale: 1.08, duration: 3.4, repeat: -1, yoyo: true, ease: "sine.inOut" });
+            gsap.fromTo(".option-card", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.55, stagger: 0.06, ease: "power2.out", clearProps: "transform" });
+            gsap.fromTo(".trial-choice-list > button", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.055, ease: "power2.out", clearProps: "transform" });
+            gsap.fromTo(".match-track span, .rhythm-track span", { scaleX: 0 }, { scaleX: 1, transformOrigin: "left center", duration: 0.85, stagger: 0.08, ease: "power3.out" });
+            gsap.utils.toArray<HTMLElement>("[data-scroll-enter]").forEach((element, index) => {
+              gsap.fromTo(
+                element,
+                { opacity: 0, y: 38 },
+                {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.72,
+                  delay: (index % 4) * 0.05,
+                  ease: "power3.out",
+                  clearProps: "transform",
+                  scrollTrigger: { trigger: element, start: "top 88%", once: true },
+                },
+              );
+            });
             gsap.to(".signal-halo-one", { rotate: 360, duration: 36, repeat: -1, ease: "none" });
             gsap.to(".signal-halo-two", { rotate: -360, duration: 48, repeat: -1, ease: "none" });
             gsap.to(".signal-scan", { rotate: 360, duration: 8, repeat: -1, ease: "none" });
