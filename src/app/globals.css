@@ -275,7 +275,12 @@ a { color: inherit; }
 .is-compact .signal-node svg { height: 17px; width: 17px; }
 .signal-scan { border-right: 1px solid rgba(242, 199, 110, 0.28); height: 41%; left: 50%; position: absolute; top: 9%; transform-origin: bottom center; width: 1px; }
 
-.path-preview { padding-bottom: 110px; padding-top: 90px; }
+.path-preview {
+  background: var(--paper);
+  color: var(--ink);
+  padding-bottom: 110px;
+  padding-top: 90px;
+}
 .section-heading { align-items: end; color: var(--ink); display: flex; gap: 40px; justify-content: space-between; margin-bottom: 38px; }
 .section-heading h2 {
   font-family: var(--font-display);
@@ -288,8 +293,7 @@ a { color: inherit; }
 }
 .section-heading > p { color: #5e6e80; font-size: 15px; line-height: 1.7; margin: 0 0 4px; max-width: 440px; }
 .path-preview, .how-it-works { max-width: none; position: relative; }
-.path-preview::before { background: var(--paper); content: ""; inset: 0 calc((1240px - 100vw) / 2); position: absolute; z-index: 0; }
-.path-preview > * { position: relative; z-index: 1; }
+.path-preview::before { content: none; }
 .path-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
 .path-card {
   background: #fff;
