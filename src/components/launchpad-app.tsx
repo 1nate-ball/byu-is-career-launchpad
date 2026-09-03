@@ -9,6 +9,7 @@ import {
   ArrowRight,
   BarChart3,
   BadgeCheck,
+  BookOpenCheck,
   BriefcaseBusiness,
   Check,
   CheckCircle2,
@@ -24,6 +25,9 @@ import {
   ListChecks,
   Mic,
   MicOff,
+  Play,
+  Printer,
+  Radio,
   RefreshCw,
   ShieldCheck,
   Sparkles,
@@ -37,16 +41,18 @@ import {
 } from "lucide-react";
 import { careers, careerOrder, quizQuestions, type CareerId } from "@/data/careers";
 import { byuPlacementUrl, careerResearch } from "@/data/career-research";
+import { fieldTrials, type TrialResult } from "@/data/field-trials";
 import {
   analyzeInterviewAnswer,
   calculateMatches,
+  getMatchEvidence,
   type AnswerAnalysis,
   type QuizAnswers,
 } from "@/lib/scoring";
 
 gsap.registerPlugin(useGSAP);
 
-type View = "home" | "quiz" | "reveal" | "dashboard" | "interview";
+type View = "home" | "quiz" | "reveal" | "dashboard" | "trial" | "interview";
 type InterviewMode = "answer" | "feedback" | "summary";
 type CareerDetailTab = "work" | "recruiter" | "path";
 type InterviewFilter = "All" | "Technical" | "Behavioral";
@@ -69,6 +75,12 @@ type SpeechRecognitionLike = {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
+type InterviewAttempt = {
+  score: number;
+  words: number;
+  seconds: number;
+};
+
 declare global {
   interface Window {
     SpeechRecognition?: SpeechRecognitionConstructor;
@@ -86,11 +98,14 @@ const iconMap: Record<CareerId, LucideIcon> = {
 const emptySubscribe = () => () => undefined;
 const getVoiceSupport = () => Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 const getServerVoiceSupport = () => false;
+const getRecorderSupport = () => Boolean(window.MediaRecorder && navigator.mediaDevices?.getUserMedia);
+const getServerRecorderSupport = () => false;
 
 function readSavedState(): {
   answers?: QuizAnswers;
   selectedCareerId?: CareerId;
   readiness?: Record<string, boolean>;
+  trialResults?: Partial<Record<CareerId, TrialResult>>;
 } {
   if (typeof window === "undefined") return {};
   try {
@@ -438,16 +453,23 @@ function MatchBars({ matches, compact = false }: { matches: ReturnType<typeof ca
 
 function RevealScreen({
   matches,
+  answers,
   onContinue,
+  onTrial,
   onPractice,
   onRetake,
 }: {
   matches: ReturnType<typeof calculateMatches>;
+  answers: QuizAnswers;
   onContinue: () => void;
+  onTrial: () => void;
   onPractice: () => void;
   onRetake: () => void;
 }) {
   const winner = careers[matches[0].id];
+  const runnerUp = careers[matches[1].id];
+  const evidence = getMatchEvidence(answers, winner.id);
+  const matchGap = matches[0].percent - matches[1].percent;
 
   return (
     <main className="reveal-screen" style={styleFor(winner.color)}>
@@ -464,12 +486,29 @@ function RevealScreen({
           <p className="reveal-tagline">{winner.tagline}</p>
           <p className="reveal-description">{winner.description}</p>
         </div>
+        <div className="reveal-evidence" data-enter>
+          <div className="evidence-heading">
+            <div><p>Why this rose to the top</p><h2>Your answers left a trail.</h2></div>
+            <span>{matchGap <= 7 ? `Close call with ${runnerUp.shortTitle}` : `${matchGap}-point lead over ${runnerUp.shortTitle}`}</span>
+          </div>
+          <div className="evidence-grid">
+            {evidence.map((item, index) => (
+              <article key={`${item.question}-${item.choice}`}>
+                <span>Signal 0{index + 1}</span>
+                <small>{item.question}</small>
+                <strong>{item.choice}</strong>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+        </div>
         <div className="reveal-matches" data-enter>
           <MatchBars matches={matches} />
           <p>This is an invitation to investigate, not a box to live in. Your adjacent paths remain part of the picture.</p>
         </div>
         <div className="reveal-actions" data-enter>
-          <button className="button button-light" type="button" onClick={onContinue}>Open my game plan <ArrowRight /></button>
+          <button className="button button-light" type="button" onClick={onTrial}><Radio /> Try the work</button>
+          <button className="button button-ghost" type="button" onClick={onContinue}>Open my game plan <ArrowRight /></button>
           <button className="button button-ghost" type="button" onClick={onPractice}>Practice a {winner.shortTitle.toLowerCase()} interview</button>
           <button className="text-button" type="button" onClick={onRetake}><RefreshCw /> Retake signal</button>
         </div>
@@ -504,27 +543,85 @@ function CareerTabs({ selected, onSelect }: { selected: CareerId; onSelect: (id:
   );
 }
 
+function EvidenceBuilder({ careerId }: { careerId: CareerId }) {
+  const career = careers[careerId];
+  const research = careerResearch[careerId];
+  const [project, setProject] = useState("");
+  const [problem, setProblem] = useState("");
+  const [action, setAction] = useState("");
+  const [result, setResult] = useState("");
+  const [copied, setCopied] = useState(false);
+  const complete = [project, problem, action, result].every((value) => value.trim().length >= 4);
+  const clean = (value: string) => value.trim().replace(/[.!?]+$/, "");
+  const capitalise = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+  const actionPhrase = clean(action).replace(/^I\s+/i, "");
+  const resumeBullet = complete ? `${capitalise(actionPhrase)} in ${clean(project)} to address ${clean(problem)}. Result: ${capitalise(clean(result))}.` : "";
+  const story = complete ? `Situation: ${capitalise(clean(problem))}. Action: In ${clean(project)}, I ${actionPhrase.charAt(0).toLowerCase() + actionPhrase.slice(1)}. Result: ${capitalise(clean(result))}.` : "";
+
+  async function copyProof() {
+    if (!complete) return;
+    try {
+      await navigator.clipboard.writeText(`RESUME BULLET\n${resumeBullet}\n\nINTERVIEW STORY\n${story}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div className="evidence-builder" data-enter>
+      <div className="evidence-builder-intro">
+        <p className="eyebrow"><BadgeCheck /> Evidence builder</p>
+        <h3>Turn classwork into recruiter proof.</h3>
+        <p>Recruiters cannot see everything you learned. Give them one concrete decision, your contribution, and what changed.</p>
+        <div>{research.skills.slice(0, 4).map((skill) => <span key={skill}>{skill}</span>)}</div>
+      </div>
+      <div className="evidence-form">
+        <label><span>Project or course</span><input onChange={(event) => setProject(event.target.value)} placeholder="IS 403 event platform" value={project} /></label>
+        <label><span>Problem or goal</span><input onChange={(event) => setProblem(event.target.value)} placeholder="students abandoned a long registration flow" value={problem} /></label>
+        <label><span>What you personally did</span><input onChange={(event) => setAction(event.target.value)} placeholder="mapped the flow and built a shorter checkout" value={action} /></label>
+        <label><span>Result or learning</span><input onChange={(event) => setResult(event.target.value)} placeholder="cut the process from eight steps to four" value={result} /></label>
+      </div>
+      <div className={`evidence-output ${complete ? "is-ready" : ""}`} aria-live="polite">
+        <div><span>Resume bullet</span><p>{complete ? resumeBullet : `Add four honest details to shape a ${career.shortTitle.toLowerCase()} proof point.`}</p></div>
+        <div><span>Interview story spine</span><p>{complete ? story : "Your situation, personal action, and result will appear here."}</p></div>
+        <button disabled={!complete} onClick={copyProof} type="button">{copied ? <CheckCircle2 /> : <BadgeCheck />} {copied ? "Copied" : "Copy both"}</button>
+      </div>
+    </div>
+  );
+}
+
 function DashboardScreen({
   selectedCareerId,
   matches,
+  answers,
   readiness,
+  trialResults,
   onSelectCareer,
   onToggleReadiness,
   onHome,
+  onTrial,
   onPractice,
   onRetake,
 }: {
   selectedCareerId: CareerId;
   matches: ReturnType<typeof calculateMatches>;
+  answers: QuizAnswers;
   readiness: Record<string, boolean>;
+  trialResults: Partial<Record<CareerId, TrialResult>>;
   onSelectCareer: (id: CareerId) => void;
   onToggleReadiness: (id: string) => void;
   onHome: () => void;
+  onTrial: () => void;
   onPractice: () => void;
   onRetake: () => void;
 }) {
   const career = careers[selectedCareerId];
   const research = careerResearch[selectedCareerId];
+  const trial = fieldTrials[selectedCareerId];
+  const trialResult = trialResults[selectedCareerId];
+  const evidence = getMatchEvidence(answers, selectedCareerId);
   const completed = career.readiness.filter((item) => readiness[item.id]).length;
   const [detailTab, setDetailTab] = useState<CareerDetailTab>("work");
   const detailTabs: { id: CareerDetailTab; label: string; note: string; icon: LucideIcon }[] = [
@@ -553,6 +650,7 @@ function DashboardScreen({
               {career.roles.map((role) => <span key={role}>{role}</span>)}
             </div>
             <div className="result-actions">
+              <button className="button button-primary" type="button" onClick={onTrial}><Radio /> Try the work</button>
               <button className="button button-primary" type="button" onClick={onPractice}>Practice this interview <ArrowRight /></button>
               <button className="button button-ghost" type="button" onClick={onRetake}><RefreshCw /> Retake signal</button>
             </div>
@@ -673,6 +771,7 @@ function DashboardScreen({
                   </div>
                 </article>
               </div>
+              <EvidenceBuilder key={selectedCareerId} careerId={selectedCareerId} />
             </section>
 
             <section className="byu-section" aria-labelledby="byu-heading">
@@ -743,8 +842,200 @@ function DashboardScreen({
                 <div><span className="practice-icon"><Volume2 /></span><div><p>Ready to make the story sound like you?</p><h3>Practice a real {career.shortTitle.toLowerCase()} question—out loud.</h3></div></div>
                 <button className="button button-light" type="button" onClick={onPractice}>Enter practice lab <ArrowRight /></button>
               </div>
+
+              <article className="launch-card" data-enter>
+                <div className="launch-card-top">
+                  <div>
+                    <p className="eyebrow"><Sparkles /> Personal launch card</p>
+                    <h2>The {career.signal}: your next seven days</h2>
+                    <p>{career.title} is a direction to test through evidence, conversation, and rehearsal.</p>
+                  </div>
+                  <div className="launch-card-mark"><CareerSigil id={career.id} /><span>BYU IS</span></div>
+                </div>
+                <div className="launch-card-grid">
+                  <section>
+                    <small>Your strongest signals</small>
+                    {evidence.length ? evidence.map((item) => <p key={`${item.question}-${item.choice}`}><CheckCircle2 /> <span><strong>{item.choice}</strong>{item.question}</span></p>) : <p><Compass /> <span><strong>Explore with curiosity</strong>Complete the signal to personalise this section.</span></p>}
+                  </section>
+                  <section>
+                    <small>Your field evidence</small>
+                    {trialResult ? (
+                      <div className="launch-trial-result"><strong>{trialResult.score}/{trialResult.maxScore}</strong><span>reasoning signal</span><em>{trialResult.energy}/5 desire to do another</em></div>
+                    ) : (
+                      <div className="launch-trial-empty"><Radio /><p><strong>No trial yet</strong><span>Test the work before you commit to the title.</span></p></div>
+                    )}
+                  </section>
+                </div>
+                <div className="launch-week">
+                  {trial.launchWeek.map((step, index) => (
+                    <div key={step.day}><span>0{index + 1}</span><small>{step.day}</small><strong>{step.title}</strong><p>{step.detail}</p></div>
+                  ))}
+                </div>
+                <div className="launch-card-actions">
+                  <button className="button button-light" type="button" onClick={() => window.print()}><Printer /> Print or save as PDF</button>
+                  <button className="button button-ghost" type="button" onClick={onTrial}>{trialResult ? "Retake field trial" : "Take field trial"} <ArrowRight /></button>
+                </div>
+              </article>
             </section>
           </>
+        )}
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
+
+function FieldTrialScreen({
+  selectedCareerId,
+  existingResult,
+  onSelectCareer,
+  onComplete,
+  onHome,
+  onExplore,
+  onPractice,
+}: {
+  selectedCareerId: CareerId;
+  existingResult?: TrialResult;
+  onSelectCareer: (id: CareerId) => void;
+  onComplete: (result: TrialResult) => void;
+  onHome: () => void;
+  onExplore: () => void;
+  onPractice: () => void;
+}) {
+  const career = careers[selectedCareerId];
+  const trial = fieldTrials[selectedCareerId];
+  const [phase, setPhase] = useState<"briefing" | "mission" | "reflection" | "result">("briefing");
+  const [stepIndex, setStepIndex] = useState(0);
+  const [choices, setChoices] = useState<Record<string, string>>({});
+  const [energy, setEnergy] = useState(existingResult?.energy ?? 0);
+  const [finalResult, setFinalResult] = useState<TrialResult | null>(null);
+  const step = trial.steps[stepIndex];
+  const selectedId = choices[step?.id];
+  const selectedChoice = step?.choices.find((choice) => choice.id === selectedId);
+  const score = trial.steps.reduce((total, item) => {
+    const choice = item.choices.find((candidate) => candidate.id === choices[item.id]);
+    return total + (choice?.score ?? 0);
+  }, 0);
+  const maxScore = trial.steps.length * 3;
+
+  function restartTrial() {
+    setPhase("briefing");
+    setStepIndex(0);
+    setChoices({});
+    setEnergy(0);
+    setFinalResult(null);
+  }
+
+  function continueMission() {
+    if (stepIndex < trial.steps.length - 1) {
+      setStepIndex((current) => current + 1);
+      return;
+    }
+    setPhase("reflection");
+  }
+
+  function finishTrial() {
+    const result = { score, maxScore, energy };
+    setFinalResult(result);
+    onComplete(result);
+    setPhase("result");
+  }
+
+  const result = finalResult ?? existingResult;
+  const resultHeadline = score >= 8 ? "You reasoned with calm precision." : score >= 6 ? "Your instincts are promising." : "You found useful edges to practise.";
+
+  return (
+    <div className="trial-screen" style={styleFor(career.color)}>
+      <AppHeader view="trial" onHome={onHome} onExplore={onExplore} onPractice={onPractice} />
+      <main className="trial-shell shell">
+        <div className="trial-kicker" data-enter><span>IS FIELD TRIAL · {career.shortTitle.toUpperCase()}</span><span>About 3 minutes</span></div>
+        <CareerTabs selected={selectedCareerId} onSelect={onSelectCareer} />
+
+        {phase === "briefing" && (
+          <section className="trial-briefing" data-enter>
+            <div className="trial-brief-copy">
+              <p className="eyebrow"><Radio /> Try the work</p>
+              <h1>{trial.title}</h1>
+              <p className="trial-mission">{trial.mission}</p>
+              <blockquote>{trial.setting}</blockquote>
+              <div className="trial-guardrail"><Lightbulb /><p><strong>This is a reasoning rehearsal, not an aptitude test.</strong><span>Every option reveals a tradeoff. Notice both how you decide and whether you want another round.</span></p></div>
+              <div className="trial-brief-actions">
+                <button className="button button-primary" type="button" onClick={() => setPhase("mission")}>Accept the mission <ArrowRight /></button>
+                {existingResult && <span>Previous field signal: {existingResult.score}/{existingResult.maxScore} · energy {existingResult.energy}/5</span>}
+              </div>
+            </div>
+            <div className="trial-emblem" aria-hidden="true"><span>FIELD<br />TRIAL</span><CareerSigil id={career.id} /><small>0{careerOrder.indexOf(career.id) + 1}</small></div>
+          </section>
+        )}
+
+        {phase === "mission" && step && (
+          <section className="trial-mission-stage" data-enter>
+            <div className="trial-progress" aria-label={`Step ${stepIndex + 1} of ${trial.steps.length}`}><span style={{ width: `${((stepIndex + 1) / trial.steps.length) * 100}%` }} /></div>
+            <div className="trial-question">
+              <div className="trial-context">
+                <p>{step.eyebrow}</p>
+                <span>Incoming evidence</span>
+                <blockquote>{step.situation}</blockquote>
+                <small>Choose the move you would defend to the team. You can change it before continuing.</small>
+              </div>
+              <div className="trial-decision">
+                <p className="eyebrow">Your decision</p>
+                <h2>{step.prompt}</h2>
+                <div className="trial-choice-list" role="radiogroup" aria-label={step.prompt}>
+                  {step.choices.map((choice, index) => {
+                    const isSelected = choice.id === selectedId;
+                    return (
+                      <button aria-checked={isSelected} className={isSelected ? "is-selected" : ""} key={choice.id} onClick={() => setChoices((current) => ({ ...current, [step.id]: choice.id }))} role="radio" type="button">
+                        <span>{String.fromCharCode(65 + index)}</span><span><strong>{choice.title}</strong><small>{choice.detail}</small></span><span>{isSelected ? <Check /> : <Circle />}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedChoice && (
+                  <div className={`trial-feedback is-score-${selectedChoice.score}`} aria-live="polite">
+                    <span>{selectedChoice.score === 3 ? <CheckCircle2 /> : <Compass />}</span>
+                    <div><strong>{selectedChoice.response}</strong><p>{selectedChoice.principle}</p></div>
+                  </div>
+                )}
+                <div className="trial-step-actions">
+                  <button className="text-button" type="button" onClick={() => stepIndex === 0 ? setPhase("briefing") : setStepIndex((current) => current - 1)}><ArrowLeft /> Back</button>
+                  <button className="button button-primary" disabled={!selectedChoice} type="button" onClick={continueMission}>{stepIndex === trial.steps.length - 1 ? "Reflect on the work" : "Next decision"} <ArrowRight /></button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {phase === "reflection" && (
+          <section className="trial-reflection" data-enter>
+            <p className="eyebrow centered"><Sparkles /> One signal only you can supply</p>
+            <div className="reflection-sigil"><CareerSigil id={career.id} /></div>
+            <h1>Did the work give you energy?</h1>
+            <p>A polished decision is useful. Wanting to make the next one is useful too.</p>
+            <div className="energy-scale" role="radiogroup" aria-label="Desire to do another scenario">
+              {["Not for me", "Mostly drained", "Still curious", "Quite engaged", "Give me another"].map((label, index) => (
+                <button aria-checked={energy === index + 1} className={energy === index + 1 ? "is-selected" : ""} key={label} onClick={() => setEnergy(index + 1)} role="radio" type="button"><strong>{index + 1}</strong><span>{label}</span></button>
+              ))}
+            </div>
+            <div className="reflection-actions"><button className="text-button" type="button" onClick={() => setPhase("mission")}><ArrowLeft /> Review decisions</button><button className="button button-light" disabled={!energy} type="button" onClick={finishTrial}>Reveal field report <ArrowRight /></button></div>
+          </section>
+        )}
+
+        {phase === "result" && result && (
+          <section className="trial-result" data-enter>
+            <div className="trial-result-hero">
+              <div className="trial-result-score"><strong>{result.score}</strong><span>/ {result.maxScore}</span></div>
+              <div><p className="eyebrow"><BookOpenCheck /> Field report</p><h1>{resultHeadline}</h1><p>You rated your desire to do another {career.shortTitle.toLowerCase()} scenario <strong>{result.energy}/5</strong>. Keep the reasoning score and the energy signal separate; both tell you something useful.</p></div>
+            </div>
+            <div className="trial-result-grid">
+              {trial.steps.map((item, index) => {
+                const choice = item.choices.find((candidate) => candidate.id === choices[item.id]);
+                return <article key={item.id}><span>Decision 0{index + 1}</span><strong>{choice?.title}</strong><p>{choice?.principle}</p><small>{choice?.score}/3 reasoning signal</small></article>;
+              })}
+            </div>
+            <div className="trial-source"><p><strong>Grounded in real occupational work.</strong><span>The scenario is simplified for exploration; company processes and incident procedures vary.</span></p><a href={trial.sourceUrl} target="_blank" rel="noreferrer">Source: {trial.sourceLabel} <ExternalLink /></a></div>
+            <div className="trial-result-actions"><button className="button button-light" type="button" onClick={onExplore}>Add this to my plan <ArrowRight /></button><button className="button button-ghost" type="button" onClick={onPractice}>Rehearse the interview</button><button className="text-button" type="button" onClick={restartTrial}><RefreshCw /> Replay trial</button></div>
+          </section>
         )}
       </main>
       <SiteFooter />
@@ -769,26 +1060,44 @@ function InterviewScreen({
   const [mode, setMode] = useState<InterviewMode>("answer");
   const [filter, setFilter] = useState<InterviewFilter>("All");
   const [scores, setScores] = useState<Record<string, number>>({});
+  const [attempts, setAttempts] = useState<Record<string, InterviewAttempt[]>>({});
   const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [recordingError, setRecordingError] = useState("");
   const voiceSupported = useSyncExternalStore(emptySubscribe, getVoiceSupport, getServerVoiceSupport);
+  const recorderSupported = useSyncExternalStore(emptySubscribe, getRecorderSupport, getServerRecorderSupport);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const transcriptBaseRef = useRef("");
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const audioUrlRef = useRef<string | null>(null);
   const career = careers[selectedCareerId];
   const research = careerResearch[selectedCareerId];
   const questions = filter === "All" ? research.questions : research.questions.filter((item) => item.type === filter);
   const question = questions[questionIndex];
+  const questionAttempts = attempts[question.id] ?? [];
+  const latestAttempt = questionAttempts.at(-1);
+  const previousAttempt = questionAttempts.at(-2);
 
   useEffect(() => {
-    return () => recognitionRef.current?.stop();
+    return () => {
+      recognitionRef.current?.stop();
+      if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+      recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+    };
   }, []);
 
-  function toggleListening() {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
+  useEffect(() => {
+    if (!isRecording) return;
+    const timer = window.setInterval(() => setRecordingSeconds((current) => current + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [isRecording]);
 
+  function startRecognition() {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) return;
 
@@ -807,16 +1116,78 @@ function InterviewScreen({
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      setIsListening(false);
+    }
+  }
+
+  function toggleListening() {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    startRecognition();
+  }
+
+  function clearRecording() {
+    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+    audioUrlRef.current = null;
+    setAudioUrl(null);
+    setRecordingSeconds(0);
+    setRecordingError("");
+  }
+
+  async function startRecording() {
+    if (!recorderSupported) return;
+    clearRecording();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferredType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = preferredType ? new MediaRecorder(stream, { mimeType: preferredType }) : new MediaRecorder(stream);
+      recordingStreamRef.current = stream;
+      recorderRef.current = recorder;
+      recordingChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) recordingChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(recordingChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const nextUrl = URL.createObjectURL(blob);
+        audioUrlRef.current = nextUrl;
+        setAudioUrl(nextUrl);
+        stream.getTracks().forEach((track) => track.stop());
+        recordingStreamRef.current = null;
+        recorderRef.current = null;
+        setIsRecording(false);
+      };
+      setRecordingSeconds(0);
+      recorder.start();
+      setIsRecording(true);
+      if (voiceSupported && !isListening) startRecognition();
+    } catch {
+      setRecordingError("Microphone access was unavailable. You can still type and receive the complete coaching review.");
+      setIsRecording(false);
+    }
+  }
+
+  function stopRecording() {
+    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+    recognitionRef.current?.stop();
+    setIsListening(false);
   }
 
   function submitAnswer() {
     recognitionRef.current?.stop();
     setIsListening(false);
     const result = analyzeInterviewAnswer(answer, question.type, question.keyTerms);
+    const words = answer.trim() ? answer.trim().split(/\s+/).length : 0;
     setAnalysis(result);
     setScores((current) => ({ ...current, [question.id]: result.score }));
+    setAttempts((current) => ({ ...current, [question.id]: [...(current[question.id] ?? []), { score: result.score, words, seconds: recordingSeconds }] }));
     setMode("feedback");
   }
 
@@ -827,6 +1198,7 @@ function InterviewScreen({
     }
     setQuestionIndex((current) => current + 1);
     setAnswer("");
+    clearRecording();
     setAnalysis(null);
     setMode("answer");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -835,8 +1207,10 @@ function InterviewScreen({
   function restart() {
     setQuestionIndex(0);
     setAnswer("");
+    clearRecording();
     setAnalysis(null);
     setScores({});
+    setAttempts({});
     setMode("answer");
   }
 
@@ -846,6 +1220,7 @@ function InterviewScreen({
     setFilter(nextFilter);
     setQuestionIndex(0);
     setAnswer("");
+    clearRecording();
     setAnalysis(null);
     setMode("answer");
   }
@@ -858,14 +1233,14 @@ function InterviewScreen({
       <main className="interview-shell shell">
         <section className="practice-header" data-enter>
           <div><p className="eyebrow"><span /> Interview practice studio</p><h1>Practise until your answer sounds like you.</h1><p>Use role-specific prompts, a clear coaching rubric, and strong-answer comparisons to make your own evidence easier to hear under pressure.</p></div>
-          <div className="practice-status"><span><Mic /> {voiceSupported ? "Voice ready" : "Typing ready"}</span><span><Target /> {career.shortTitle} track</span></div>
+          <div className="practice-status"><span><Mic /> {recorderSupported ? "Record + replay ready" : voiceSupported ? "Voice dictation ready" : "Typing ready"}</span><span><Target /> {career.shortTitle} track</span></div>
         </section>
 
         <CareerTabs selected={selectedCareerId} onSelect={onSelectCareer} />
 
         <div className="interview-filters" aria-label="Filter practice questions">
           {(["All", "Technical", "Behavioral"] as InterviewFilter[]).map((item) => (
-            <button className={filter === item ? "is-active" : ""} key={item} onClick={() => selectFilter(item)} type="button">
+            <button className={filter === item ? "is-active" : ""} disabled={isRecording} key={item} onClick={() => selectFilter(item)} type="button">
               {item}
               <span>{item === "All" ? research.questions.length : research.questions.filter((questionItem) => questionItem.type === item).length}</span>
             </button>
@@ -880,10 +1255,12 @@ function InterviewScreen({
               {questions.map((item, index) => (
                 <button
                   className={`${index === questionIndex ? "is-active" : ""} ${scores[item.id] ? "is-complete" : ""}`}
+                  disabled={isRecording}
                   key={item.id}
                   onClick={() => {
                     setQuestionIndex(index);
                     setAnswer("");
+                    clearRecording();
                     setAnalysis(null);
                     setMode("answer");
                   }}
@@ -904,7 +1281,7 @@ function InterviewScreen({
 
               {mode === "answer" ? (
                 <div className="answer-card">
-                  <div className="answer-heading"><div><p>Your answer</p><span>Speak naturally or type a draft. Aim for 60–120 seconds.</span></div><span className="answer-time"><Timer /> ~90 sec</span></div>
+                  <div className="answer-heading"><div><p>Your answer · attempt {questionAttempts.length + 1}</p><span>Record and replay yourself, or type a draft. Aim for 60–120 seconds.</span></div><span className="answer-time"><Timer /> {recordingSeconds ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")}` : "~90 sec"}</span></div>
                   <textarea
                     aria-label="Interview answer"
                     onChange={(event) => setAnswer(event.target.value)}
@@ -914,19 +1291,21 @@ function InterviewScreen({
                   <div className="answer-footer">
                     <div>
                       <button
-                        className={`voice-button ${isListening ? "is-listening" : ""}`}
-                        disabled={!voiceSupported}
-                        onClick={toggleListening}
-                        title={voiceSupported ? "Use speech recognition" : "Speech recognition is not supported in this browser. You can still type your answer."}
+                        className={`voice-button ${isRecording || isListening ? "is-listening" : ""}`}
+                        disabled={!recorderSupported && !voiceSupported}
+                        onClick={() => recorderSupported ? (isRecording ? stopRecording() : startRecording()) : toggleListening()}
+                        title={recorderSupported ? "Record an audio attempt locally in this browser" : voiceSupported ? "Use speech recognition" : "Voice tools are unavailable in this browser. You can still type your answer."}
                         type="button"
                       >
-                        {isListening ? <MicOff /> : <Mic />} {isListening ? "Stop listening" : voiceSupported ? "Answer with voice" : "Voice unavailable"}
+                        {isRecording || isListening ? <MicOff /> : <Mic />} {isRecording ? "Stop recording" : isListening ? "Stop listening" : recorderSupported ? "Record an attempt" : voiceSupported ? "Answer with voice" : "Voice unavailable"}
                       </button>
                       <span className="word-count">{answer.trim() ? answer.trim().split(/\s+/).length : 0} words</span>
                     </div>
-                    <button className="button button-primary" disabled={answer.trim().length < 20} onClick={submitAnswer} type="button">Get coaching <ArrowRight /></button>
+                    <button className="button button-primary" disabled={answer.trim().length < 20 || isRecording} onClick={submitAnswer} type="button">Get coaching <ArrowRight /></button>
                   </div>
-                  {isListening && <div className="listening-bar" role="status"><span /><span /><span /><span /><p>Listening—your words will appear above.</p></div>}
+                  {(isRecording || isListening) && <div className="listening-bar" role="status"><span /><span /><span /><span /><p>{isRecording ? "Recording locally" : "Listening"}{voiceSupported ? "—your words will appear above." : "—add notes above when you finish."}</p></div>}
+                  {audioUrl && <div className="audio-review"><div><Play /><span><strong>Replay this attempt</strong><small>Audio stays in this browser tab.</small></span></div><audio controls src={audioUrl}>Your browser does not support audio playback.</audio></div>}
+                  {recordingError && <p className="recording-error" role="alert">{recordingError}</p>}
                 </div>
               ) : analysis ? (
                 <div className="feedback-stack">
@@ -934,6 +1313,14 @@ function InterviewScreen({
                     <div className="score-ring"><span><strong>{analysis.score}</strong><small>/100</small></span></div>
                     <div><p>Coach readout</p><h2>{analysis.headline}</h2><span>{analysis.summary}</span></div>
                   </div>
+                  {previousAttempt && latestAttempt && (
+                    <div className="attempt-comparison">
+                      <div><span>Attempt {questionAttempts.length}</span><strong>{latestAttempt.score}</strong><small>{latestAttempt.words} words{latestAttempt.seconds ? ` · ${latestAttempt.seconds}s` : ""}</small></div>
+                      <ArrowRight />
+                      <div><span>Change from last try</span><strong className={latestAttempt.score >= previousAttempt.score ? "is-positive" : ""}>{latestAttempt.score - previousAttempt.score >= 0 ? "+" : ""}{latestAttempt.score - previousAttempt.score}</strong><small>{latestAttempt.words - previousAttempt.words >= 0 ? "+" : ""}{latestAttempt.words - previousAttempt.words} words</small></div>
+                      <p>{latestAttempt.score > previousAttempt.score ? "Your revision strengthened the coaching signal." : "A lower score can still be a better spoken answer—listen for clarity, confidence, and your own voice."}</p>
+                    </div>
+                  )}
                   <div className="feedback-grid">
                     {analysis.checks.map((check) => (
                       <div className={check.passed ? "is-passed" : ""} key={check.label}>
@@ -947,7 +1334,7 @@ function InterviewScreen({
                     <div>{question.hasCode ? <pre>{question.strongAnswer}</pre> : <p>{question.strongAnswer}</p>}<small>Use the structure, not the wording. Your own evidence will sound more credible.</small></div>
                   </details>
                   <div className="feedback-actions">
-                    <button className="button button-ghost" type="button" onClick={() => setMode("answer")}><RefreshCw /> Revise this answer</button>
+                    <button className="button button-ghost" type="button" onClick={() => { clearRecording(); setMode("answer"); }}><RefreshCw /> Record attempt {questionAttempts.length + 1}</button>
                     <button className="button button-primary" type="button" onClick={nextQuestion}>{questionIndex === questions.length - 1 ? "See practice summary" : "Next question"} <ArrowRight /></button>
                   </div>
                 </div>
@@ -979,7 +1366,7 @@ function SiteFooter() {
       <div className="shell">
         <Brand />
         <p>Student-built prototype for BYU Information Systems. Career matches are exploration prompts, not assessments or guarantees.</p>
-        <div><a href="https://marriott.byu.edu/infosys/" target="_blank" rel="noreferrer">BYU Information Systems <ExternalLink /></a><span>Research build v2</span></div>
+        <div><a href="https://marriott.byu.edu/infosys/" target="_blank" rel="noreferrer">BYU Information Systems <ExternalLink /></a><span>Field trial build v3</span></div>
       </div>
     </footer>
   );
@@ -995,6 +1382,7 @@ export default function LaunchpadApp() {
     savedState.selectedCareerId && careerOrder.includes(savedState.selectedCareerId) ? savedState.selectedCareerId : "build",
   );
   const [readiness, setReadiness] = useState<Record<string, boolean>>(savedState.readiness ?? {});
+  const [trialResults, setTrialResults] = useState<Partial<Record<CareerId, TrialResult>>>(savedState.trialResults ?? {});
 
   const matches = useMemo(() => {
     if (Object.keys(answers).length === quizQuestions.length) return calculateMatches(answers);
@@ -1003,11 +1391,11 @@ export default function LaunchpadApp() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem("byu-is-launchpad-v2", JSON.stringify({ answers, selectedCareerId, readiness }));
+      window.localStorage.setItem("byu-is-launchpad-v2", JSON.stringify({ answers, selectedCareerId, readiness, trialResults }));
     } catch {
       // See note above: persistence is an enhancement, not a requirement.
     }
-  }, [answers, selectedCareerId, readiness]);
+  }, [answers, selectedCareerId, readiness, trialResults]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -1085,10 +1473,13 @@ export default function LaunchpadApp() {
         <QuizScreen answers={answers} questionIndex={questionIndex} onAnswer={(optionId) => setAnswers((current) => ({ ...current, [questionIndex]: optionId }))} onBack={goBackQuiz} onContinue={continueQuiz} onExit={() => setView("home")} />
       )}
       {view === "reveal" && (
-        <RevealScreen matches={matches} onContinue={() => setView("dashboard")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
+        <RevealScreen answers={answers} matches={matches} onContinue={() => setView("dashboard")} onTrial={() => setView("trial")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
       )}
       {view === "dashboard" && (
-        <DashboardScreen selectedCareerId={selectedCareerId} matches={matches} readiness={readiness} onSelectCareer={setSelectedCareerId} onToggleReadiness={(id) => setReadiness((current) => ({ ...current, [id]: !current[id] }))} onHome={() => setView("home")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
+        <DashboardScreen answers={answers} selectedCareerId={selectedCareerId} matches={matches} readiness={readiness} trialResults={trialResults} onSelectCareer={setSelectedCareerId} onToggleReadiness={(id) => setReadiness((current) => ({ ...current, [id]: !current[id] }))} onHome={() => setView("home")} onTrial={() => setView("trial")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
+      )}
+      {view === "trial" && (
+        <FieldTrialScreen key={selectedCareerId} selectedCareerId={selectedCareerId} existingResult={trialResults[selectedCareerId]} onSelectCareer={setSelectedCareerId} onComplete={(result) => setTrialResults((current) => ({ ...current, [selectedCareerId]: result }))} onHome={() => setView("home")} onExplore={() => setView("dashboard")} onPractice={() => setView("interview")} />
       )}
       {view === "interview" && (
         <InterviewScreen key={selectedCareerId} selectedCareerId={selectedCareerId} onSelectCareer={setSelectedCareerId} onHome={() => setView("home")} onExplore={() => setView("dashboard")} />

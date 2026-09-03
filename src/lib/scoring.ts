@@ -13,6 +13,13 @@ export type MatchResult = {
   percent: number;
 };
 
+export type MatchEvidence = {
+  question: string;
+  choice: string;
+  detail: string;
+  weight: number;
+};
+
 const emptyScore = (): CareerScore => ({
   build: 0,
   analyze: 0,
@@ -45,6 +52,26 @@ export function calculateMatches(answers: QuizAnswers): MatchResult[] {
       percent: Math.round(58 + ((scores[id] - minScore) / range) * 34),
     }))
     .sort((a, b) => b.raw - a.raw);
+}
+
+export function getMatchEvidence(answers: QuizAnswers, careerId: CareerId): MatchEvidence[] {
+  return Object.entries(answers)
+    .map(([questionIndex, optionId]) => {
+      const question = quizQuestions[Number(questionIndex)];
+      const option = question?.options.find((candidate) => candidate.id === optionId);
+
+      if (!question || !option) return null;
+
+      return {
+        question: question.eyebrow,
+        choice: option.label.replace(/[“”]/g, ""),
+        detail: option.detail,
+        weight: option.scores[careerId],
+      };
+    })
+    .filter((item): item is MatchEvidence => Boolean(item && item.weight > 0))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 3);
 }
 
 export type AnswerAnalysis = {

@@ -12,13 +12,16 @@ The public site is rebuilt automatically by GitHub Actions whenever `main` is up
 
 - An eight-question, one-question-at-a-time career signal
 - Four IS paths: Software Development, Data & Analytics, Cybersecurity, and Product & Project
-- A ranked fit result with an animated reveal
+- A ranked fit result with an animated reveal and answer-level explanation of why the match surfaced
+- Four interactive, O*NET-grounded field trials that let students test the work before committing to a path
 - Three focused role views: real work, recruiter expectations, and the path ahead
 - Contextual salary benchmarks that keep BYU first-job data separate from national all-experience medians
 - BYU junior-core preparation moves and persistent internship-readiness checklists
 - Twenty-four researched interview questions: three behavioral and three technical per path
-- Typed answers plus progressive-enhancement voice dictation through the browser Speech Recognition API
-- Deterministic answer coaching, role criteria, strong-answer comparisons, and a practice-set summary
+- A recruiter-proof builder that turns honest classwork details into a resume bullet and interview story spine
+- Printable personal launch cards with match evidence, field-trial results, and a seven-day action plan
+- Typed answers plus local audio recording/replay and progressive-enhancement voice dictation
+- Deterministic answer coaching, attempt-over-attempt comparison, role criteria, strong-answer comparisons, and a practice-set summary
 - Responsive desktop/mobile layouts and reduced-motion support
 
 No database, account, environment variable, or paid AI API is required for the MVP.
@@ -55,6 +58,12 @@ The teammate-informed role research, salary context, progression, credentials, a
 src/data/career-research.ts
 ```
 
+The decision scenarios and seven-day field plans live in:
+
+```text
+src/data/field-trials.ts
+```
+
 The scoring and local interview feedback logic lives in:
 
 ```text
@@ -65,7 +74,7 @@ The data is typed, so malformed additions are caught during `npm run build`. See
 
 ## Voice support
 
-Voice dictation is an enhancement, not a dependency. The practice lab detects browser support and enables **Answer with voice** where `SpeechRecognition` is available. Chrome-family browsers currently provide the most reliable demo experience. Other browsers retain the complete typed-answer flow.
+Voice is an enhancement, not a dependency. Where supported, the practice lab can record an attempt for local replay and use `SpeechRecognition` to place spoken words in the answer field. Audio remains in the current tab and is not uploaded. Other browsers retain the complete typed-answer flow.
 
 ## GitHub Pages deployment
 

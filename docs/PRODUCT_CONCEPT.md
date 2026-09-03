@@ -19,10 +19,13 @@ These are starting hypotheses, not personality labels. Every result keeps all fo
 
 - **One question at a time.** The [GOV.UK Design System question-page pattern](https://design-system.service.gov.uk/patterns/question-pages/) recommends this structure to reduce cognitive load and maintain focus. We use a simple “Question 3 of 8” indicator, a visible back control, and an explicit Continue action.
 - **A reveal with immediate utility.** The cinematic moment creates emotional salience, then quickly translates the archetype into real titles, work patterns, friction, and action.
+- **Explain the match.** The reveal points back to the student's actual choices and keeps the runner-up visible, making the recommendation inspectable rather than oracular.
+- **Test the work, not just the identity.** Four short field trials ask students to make realistic decisions, reveal the tradeoff behind each option, and keep reasoning quality separate from the student's desire to do more of the work.
 - **Progressive disclosure.** The dashboard separates detail into three user-chosen views: real work, getting hired, and the path ahead. Rich research stays available without becoming one wall of text.
 - **Motion with a job.** GSAP handles scene entrances, the signal orbit, and the result reveal. Motion is brief and tied to state changes. `gsap.matchMedia()` and CSS honor `prefers-reduced-motion`, consistent with [GSAP guidance](https://gsap.com/docs/v3/GSAP/gsap.matchMedia%28%29/) and [W3C technique C39](https://www.w3.org/WAI/WCAG21/Techniques/css/C39.html).
 - **Voice without fragility.** The browser [SpeechRecognition API](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition) is not supported everywhere, so the same coaching workflow always works by typing. Voice is enabled only after capability detection.
 - **Transparent coaching.** The MVP does not pretend to be AI. It checks answer depth, structure, specificity, focused length, and role language, then shows its evidence and a human-readable rubric.
+- **Leave with an artifact.** A recruiter-proof builder and printable launch card turn exploration into language and actions a student can use after closing the tab.
 
 ## Visual direction
 
@@ -72,9 +75,12 @@ Included now:
 - Four complete path workspaces
 - BYU preparation advice
 - Persistent readiness checklists
+- Explainable match evidence and adjacent-path comparison
+- Four interactive field trials with an energy reflection
+- Recruiter-proof builder and printable seven-day launch card
 - Role-specific behavioral and technical practice
-- Typed and voice-dictated responses
-- Local, explainable coaching
+- Typed, voice-dictated, and locally recorded responses
+- Local, explainable coaching with attempt-over-attempt progress
 
 Deferred deliberately:
 
