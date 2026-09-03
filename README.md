@@ -44,6 +44,26 @@ npm run build
 
 The project intentionally uses webpack for local development and production builds. This keeps builds reliable in restricted environments where Turbopack cannot open its internal helper port.
 
+### Browser verification
+
+The browser checker requires Node.js 24 or newer. Install its managed Chrome runtime once:
+
+```bash
+npm run browser:install
+```
+
+With `npm run dev` running in another terminal, check the local site with:
+
+```bash
+npm run browser:check
+```
+
+The check rejects blank pages and framework error overlays, prints the interactive page structure, saves an annotated screenshot, and closes the browser. You can also check another URL:
+
+```bash
+npm run browser:check -- https://example.com
+```
+
 ## Edit the career content
 
 The assessment, broad career framing, and BYU readiness content lives in:
