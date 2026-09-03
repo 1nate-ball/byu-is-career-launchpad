@@ -35,7 +35,6 @@ import {
   Timer,
   TrendingUp,
   Users,
-  Volume2,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -195,22 +194,30 @@ function AppHeader({
   view,
   onHome,
   onExplore,
+  onTrial,
   onPractice,
 }: {
   view: View;
   onHome: () => void;
   onExplore: () => void;
+  onTrial: () => void;
   onPractice: () => void;
 }) {
   return (
     <header className="site-header">
       <Brand onClick={onHome} />
       <nav aria-label="Primary navigation">
+        <button className={view === "home" ? "is-active" : ""} type="button" onClick={onHome}>
+          Home
+        </button>
         <button className={view === "dashboard" ? "is-active" : ""} type="button" onClick={onExplore}>
-          Explore paths
+          Career guide
+        </button>
+        <button className={view === "trial" ? "is-active" : ""} type="button" onClick={onTrial}>
+          Field trial
         </button>
         <button className={view === "interview" ? "is-active" : ""} type="button" onClick={onPractice}>
-          Practice interview
+          Interview
         </button>
       </nav>
     </header>
@@ -247,17 +254,19 @@ function SignalVisual({ active = "build", compact = false }: { active?: CareerId
 function HomeScreen({
   onStart,
   onExplore,
+  onTrial,
   onPractice,
   onSelectCareer,
 }: {
   onStart: () => void;
   onExplore: () => void;
+  onTrial: () => void;
   onPractice: () => void;
   onSelectCareer: (id: CareerId) => void;
 }) {
   return (
     <div className="home-screen">
-      <AppHeader view="home" onHome={() => undefined} onExplore={onExplore} onPractice={onPractice} />
+      <AppHeader view="home" onHome={() => window.scrollTo({ top: 0, behavior: "smooth" })} onExplore={onExplore} onTrial={onTrial} onPractice={onPractice} />
       <main>
         <section className="hero shell">
           <div className="hero-copy" data-enter>
@@ -274,19 +283,9 @@ function HomeScreen({
                 Browse the four paths
               </button>
             </div>
-            <div className="hero-proof" aria-label="Product highlights">
-              <span><Timer /> About 4 minutes</span>
-              <span><Target /> Recruiting-ready next steps</span>
-              <span><Mic /> Voice practice included</span>
-            </div>
           </div>
           <div className="hero-art" data-enter>
-            <div className="hero-field-note" aria-hidden="true"><span>DISCOVER</span><span>PREPARE</span><span>PRACTISE</span></div>
-            <p className="visual-kicker">Your signal is waiting</p>
             <SignalVisual active="analyze" />
-            <div className="visual-caption">
-              <Sparkles /> Clarity often begins as curiosity.
-            </div>
           </div>
         </section>
 
@@ -320,20 +319,6 @@ function HomeScreen({
                 </button>
               );
             })}
-          </div>
-        </section>
-
-        <section className="how-it-works shell" aria-labelledby="how-heading">
-          <div className="how-panel" data-enter>
-            <div>
-              <p className="eyebrow">Not a verdict</p>
-              <h2 id="how-heading">A gracious place to begin.</h2>
-            </div>
-            <div className="how-steps">
-              <div><span>01</span><strong>Notice your pattern</strong><p>Eight ordinary choices surface the ways you naturally solve problems.</p></div>
-              <div><span>02</span><strong>Meet the real work</strong><p>See a representative day, the friction, and related entry-level roles.</p></div>
-              <div><span>03</span><strong>Move this week</strong><p>Turn junior-core work into evidence, check readiness, and rehearse aloud.</p></div>
-            </div>
           </div>
         </section>
 
@@ -389,11 +374,9 @@ function QuizScreen({
           <Image src={scene.src} alt="" fill priority sizes="(max-width: 900px) 100vw, 42vw" />
           <div className="quiz-scene-shade" />
           <div className="quiz-scene-index" aria-hidden="true">0{questionIndex + 1}</div>
-          <div className="quiz-scene-caption"><span>{scene.label}</span><p>{scene.note}</p></div>
         </div>
         <div className="quiz-question-panel">
           <div className="quiz-intro" data-enter>
-            <p className="question-count">Question {questionIndex + 1} of {quizQuestions.length}</p>
             <p className="eyebrow">{question.eyebrow}</p>
             <h1 id="question-heading">{question.prompt}</h1>
             <p>{question.helper}</p>
@@ -419,7 +402,6 @@ function QuizScreen({
             })}
           </div>
           <div className="quiz-actions" data-enter>
-            <span>Trust the answer that feels most like Tuesday, not your best day.</span>
             <button className="button button-primary" disabled={!selected} type="button" onClick={onContinue}>
               {questionIndex === quizQuestions.length - 1 ? "Reveal my signal" : "Continue"} <ArrowRight />
             </button>
@@ -454,6 +436,7 @@ function MatchBars({ matches, compact = false }: { matches: ReturnType<typeof ca
 function RevealScreen({
   matches,
   answers,
+  onHome,
   onContinue,
   onTrial,
   onPractice,
@@ -461,6 +444,7 @@ function RevealScreen({
 }: {
   matches: ReturnType<typeof calculateMatches>;
   answers: QuizAnswers;
+  onHome: () => void;
   onContinue: () => void;
   onTrial: () => void;
   onPractice: () => void;
@@ -472,9 +456,9 @@ function RevealScreen({
   const matchGap = matches[0].percent - matches[1].percent;
 
   return (
-    <main className="reveal-screen" style={styleFor(winner.color)}>
-      <div className="reveal-topbar"><Brand compact /><span>Your career signal</span></div>
-      <section className="reveal-stage shell">
+    <div className="reveal-screen" style={styleFor(winner.color)}>
+      <AppHeader view="reveal" onHome={onHome} onExplore={onContinue} onTrial={onTrial} onPractice={onPractice} />
+      <main className="reveal-stage shell">
         <div className="reveal-orbit" data-enter>
           <SignalVisual active={winner.id} compact />
         </div>
@@ -497,25 +481,22 @@ function RevealScreen({
                 <span>Signal 0{index + 1}</span>
                 <small>{item.question}</small>
                 <strong>{item.choice}</strong>
-                <p>{item.detail}</p>
               </article>
             ))}
           </div>
         </div>
         <div className="reveal-matches" data-enter>
           <MatchBars matches={matches} />
-          <p>This is an invitation to investigate, not a box to live in. Your adjacent paths remain part of the picture.</p>
         </div>
         <div className="reveal-actions" data-enter>
           <button className="button button-light" type="button" onClick={onTrial}><Radio /> Try the work</button>
           <button className="button button-ghost" type="button" onClick={onContinue}>Open my game plan <ArrowRight /></button>
-          <button className="button button-ghost" type="button" onClick={onPractice}>Practice a {winner.shortTitle.toLowerCase()} interview</button>
           <button className="text-button" type="button" onClick={onRetake}><RefreshCw /> Retake signal</button>
         </div>
-      </section>
+      </main>
       <div className="reveal-burst burst-one" />
       <div className="reveal-burst burst-two" />
-    </main>
+    </div>
   );
 }
 
@@ -545,7 +526,6 @@ function CareerTabs({ selected, onSelect }: { selected: CareerId; onSelect: (id:
 
 function EvidenceBuilder({ careerId }: { careerId: CareerId }) {
   const career = careers[careerId];
-  const research = careerResearch[careerId];
   const [project, setProject] = useState("");
   const [problem, setProblem] = useState("");
   const [action, setAction] = useState("");
@@ -575,7 +555,6 @@ function EvidenceBuilder({ careerId }: { careerId: CareerId }) {
         <p className="eyebrow"><BadgeCheck /> Evidence builder</p>
         <h3>Turn classwork into recruiter proof.</h3>
         <p>Recruiters cannot see everything you learned. Give them one concrete decision, your contribution, and what changed.</p>
-        <div>{research.skills.slice(0, 4).map((skill) => <span key={skill}>{skill}</span>)}</div>
       </div>
       <div className="evidence-form">
         <label><span>Project or course</span><input onChange={(event) => setProject(event.target.value)} placeholder="IS 403 event platform" value={project} /></label>
@@ -622,19 +601,20 @@ function DashboardScreen({
   const trial = fieldTrials[selectedCareerId];
   const trialResult = trialResults[selectedCareerId];
   const evidence = getMatchEvidence(answers, selectedCareerId);
+  const hasCompleteSignal = Object.keys(answers).length === quizQuestions.length;
   const completed = career.readiness.filter((item) => readiness[item.id]).length;
   const [detailTab, setDetailTab] = useState<CareerDetailTab>("work");
-  const detailTabs: { id: CareerDetailTab; label: string; note: string; icon: LucideIcon }[] = [
-    { id: "work", label: "Real work", note: "What the day feels like", icon: BriefcaseBusiness },
-    { id: "recruiter", label: "Get hired", note: "What entry-level means", icon: ListChecks },
-    { id: "path", label: "Path ahead", note: "Growth and next steps", icon: TrendingUp },
+  const detailTabs: { id: CareerDetailTab; label: string; icon: LucideIcon }[] = [
+    { id: "work", label: "Real work", icon: BriefcaseBusiness },
+    { id: "recruiter", label: "Get hired", icon: ListChecks },
+    { id: "path", label: "Next steps", icon: TrendingUp },
   ];
 
   return (
     <div className="dashboard-screen" style={styleFor(career.color)}>
-      <AppHeader view="dashboard" onHome={onHome} onExplore={() => window.scrollTo({ top: 0, behavior: "smooth" })} onPractice={onPractice} />
+      <AppHeader view="dashboard" onHome={onHome} onExplore={() => window.scrollTo({ top: 0, behavior: "smooth" })} onTrial={onTrial} onPractice={onPractice} />
       <main>
-        <section className="result-hero shell">
+        <section className={`result-hero shell ${hasCompleteSignal ? "" : "is-unscored"}`}>
           <div className="result-heading" data-enter>
             <p className="eyebrow"><span /> Career path workspace</p>
             <div className="result-title-row">
@@ -643,23 +623,19 @@ function DashboardScreen({
             </div>
             <p className="result-lede">{career.description}</p>
             <div className="profile-focus">
-              <strong>Profiled role: {research.focusRole}</strong>
-              <span>{research.scopeNote}</span>
-            </div>
-            <div className="role-pills" aria-label="Related roles">
-              {career.roles.map((role) => <span key={role}>{role}</span>)}
+              <strong>Explore this path as a {research.focusRole}</strong>
             </div>
             <div className="result-actions">
               <button className="button button-primary" type="button" onClick={onTrial}><Radio /> Try the work</button>
-              <button className="button button-primary" type="button" onClick={onPractice}>Practice this interview <ArrowRight /></button>
               <button className="button button-ghost" type="button" onClick={onRetake}><RefreshCw /> Retake signal</button>
             </div>
           </div>
-          <aside className="result-score-card" data-enter>
-            <div className="score-card-top"><span>Your fit pattern</span><Sparkles /></div>
-            <MatchBars matches={matches} compact />
-            <p>Your top result is a starting hypothesis. Compare the work, then test it with a project and two conversations.</p>
-          </aside>
+          {hasCompleteSignal && (
+            <aside className="result-score-card" data-enter>
+              <div className="score-card-top"><span>Your fit pattern</span><Sparkles /></div>
+              <MatchBars matches={matches} compact />
+            </aside>
+          )}
         </section>
 
         <div className="tab-shell shell">
@@ -686,7 +662,7 @@ function DashboardScreen({
                   type="button"
                 >
                   <TabIcon />
-                  <span><strong>{tab.label}</strong><small>{tab.note}</small></span>
+                  <strong>{tab.label}</strong>
                 </button>
               );
             })}
@@ -697,7 +673,6 @@ function DashboardScreen({
           <section className="workspace-section shell" aria-labelledby="work-heading">
             <div className="section-heading" data-enter>
               <div><p className="eyebrow">What the job is really like</p><h2 id="work-heading">A representative day—not a highlight reel.</h2></div>
-              <p>{career.tagline}</p>
             </div>
             <div className="work-grid">
               <div className="day-card" data-enter>
@@ -743,23 +718,24 @@ function DashboardScreen({
             <section className="recruiter-section shell" aria-labelledby="recruiter-heading">
               <div className="section-heading" data-enter>
                 <div><p className="eyebrow">The recruiter lens</p><h2 id="recruiter-heading">Know what “ready” actually means.</h2></div>
-                <p>Focus on credible junior evidence. You do not need to impersonate a mid-career candidate.</p>
               </div>
               <div className="recruiter-grid">
                 <article className="expectation-card" data-enter>
                   <div className="card-heading"><span><CheckCircle2 /></span><div><p>Expected now</p><h3>Signals worth building</h3></div></div>
                   <ul>{research.entryExpected.map((item) => <li key={item}><Check />{item}</li>)}</ul>
                 </article>
-                <article className="expectation-card is-muted" data-enter>
-                  <div className="card-heading"><span><Circle /></span><div><p>Not expected yet</p><h3>Pressure you can drop</h3></div></div>
-                  <ul>{research.notExpectedYet.map((item) => <li key={item}><Circle />{item}</li>)}</ul>
-                </article>
                 <article className="skills-card" data-enter>
                   <div className="card-heading"><span><Wrench /></span><div><p>Technical toolkit</p><h3>Build toward fluency</h3></div></div>
                   <div className="skill-chips">{research.skills.map((skill) => <span key={skill}>{skill}</span>)}</div>
                 </article>
-                <article className="salary-card" data-enter>
-                  <div className="card-heading"><span><CircleDollarSign /></span><div><p>Pay, with context</p><h3>Two numbers that are not interchangeable</h3></div></div>
+              </div>
+              <div className="recruiter-disclosures">
+                <details className="compact-disclosure" data-enter>
+                  <summary><span><Circle /></span><strong>What you do not need yet</strong><ChevronRight /></summary>
+                  <ul>{research.notExpectedYet.map((item) => <li key={item}><Circle />{item}</li>)}</ul>
+                </details>
+                <details className="compact-disclosure" data-enter>
+                  <summary><span><CircleDollarSign /></span><strong>Pay and source context</strong><ChevronRight /></summary>
                   <div className="salary-comparison">
                     <div><small>BYU BS IS, first jobs</small><strong>{formatCurrency(research.salary.byuMedian)}</strong><span>2025 median · all roles blended</span></div>
                     <div><small>National occupation median</small><strong>{formatCurrency(research.salary.nationalMedian)}</strong><span>{research.salary.nationalRole} · all experience levels</span></div>
@@ -769,7 +745,7 @@ function DashboardScreen({
                     <a href={byuPlacementUrl} target="_blank" rel="noreferrer">BYU placement data <ExternalLink /></a>
                     <a href={research.salarySourceUrl} target="_blank" rel="noreferrer">BLS occupation data <ExternalLink /></a>
                   </div>
-                </article>
+                </details>
               </div>
               <EvidenceBuilder key={selectedCareerId} careerId={selectedCareerId} />
             </section>
@@ -778,7 +754,6 @@ function DashboardScreen({
               <div className="shell">
                 <div className="section-heading light" data-enter>
                   <div><p className="eyebrow">Your BYU advantage</p><h2 id="byu-heading">Turn the junior core into recruiting evidence.</h2></div>
-                  <p>You are already doing relevant work. The move is to package it around decisions, contribution, and impact.</p>
                 </div>
                 <div className="byu-moves">
                   {career.byuMoves.map((move, index) => (
@@ -788,7 +763,7 @@ function DashboardScreen({
                   ))}
                 </div>
                 <div className="byu-resource" data-enter>
-                  <div><GraduationCap /><span><strong>Recruit with the official ecosystem, too.</strong><small>BYU Marriott’s Career Tools page points students to CareerLaunch, Handshake, placement data, and internship resources.</small></span></div>
+                  <div><GraduationCap /><span><strong>Use BYU Marriott’s official career tools, too.</strong></span></div>
                   <a href="https://marriott.byu.edu/infosys/careers/career-tools/" target="_blank" rel="noreferrer">Open BYU career tools <ExternalLink /></a>
                 </div>
               </div>
@@ -801,7 +776,6 @@ function DashboardScreen({
             <section className="path-ahead-section shell" aria-labelledby="path-ahead-heading">
               <div className="section-heading" data-enter>
                 <div><p className="eyebrow">A possible path</p><h2 id="path-ahead-heading">See the next rung without locking in a ladder.</h2></div>
-                <p>Titles and timing vary. Use this as a conversation map, not a promise.</p>
               </div>
               <div className="progression-track" data-enter>
                 {research.progression.map((step, index) => (
@@ -813,14 +787,14 @@ function DashboardScreen({
                   </article>
                 ))}
               </div>
-              <div className="credential-panel" data-enter>
-                <div className="credential-intro"><BadgeCheck /><div><p>Credentials, in context</p><h3>Useful when the timing is right</h3></div></div>
+              <details className="credential-panel" data-enter>
+                <summary className="credential-intro"><BadgeCheck /><div><p>Credentials, in context</p><h3>Useful when the timing is right</h3></div><ChevronRight /></summary>
                 <div className="credential-grid">
                   {research.credentials.map((credential) => (
                     <article key={credential.name}><span>{credential.timing}</span><strong>{credential.name}</strong><p>{credential.note}</p></article>
                   ))}
                 </div>
-              </div>
+              </details>
             </section>
 
             <section className="readiness-section shell" aria-labelledby="ready-heading">
@@ -838,24 +812,18 @@ function DashboardScreen({
                   );
                 })}
               </div>
-              <div className="practice-banner" data-enter>
-                <div><span className="practice-icon"><Volume2 /></span><div><p>Ready to make the story sound like you?</p><h3>Practice a real {career.shortTitle.toLowerCase()} question—out loud.</h3></div></div>
-                <button className="button button-light" type="button" onClick={onPractice}>Enter practice lab <ArrowRight /></button>
-              </div>
-
               <article className="launch-card" data-enter>
                 <div className="launch-card-top">
                   <div>
                     <p className="eyebrow"><Sparkles /> Personal launch card</p>
                     <h2>The {career.signal}: your next seven days</h2>
-                    <p>{career.title} is a direction to test through evidence, conversation, and rehearsal.</p>
                   </div>
                   <div className="launch-card-mark"><CareerSigil id={career.id} /><span>BYU IS</span></div>
                 </div>
                 <div className="launch-card-grid">
                   <section>
                     <small>Your strongest signals</small>
-                    {evidence.length ? evidence.map((item) => <p key={`${item.question}-${item.choice}`}><CheckCircle2 /> <span><strong>{item.choice}</strong>{item.question}</span></p>) : <p><Compass /> <span><strong>Explore with curiosity</strong>Complete the signal to personalise this section.</span></p>}
+                    {evidence.length ? evidence.map((item) => <p key={`${item.question}-${item.choice}`}><CheckCircle2 /> <span><strong>{item.choice}</strong></span></p>) : <p><Compass /> <span><strong>Explore with curiosity</strong>Complete the signal to personalise this section.</span></p>}
                   </section>
                   <section>
                     <small>Your field evidence</small>
@@ -946,7 +914,7 @@ function FieldTrialScreen({
 
   return (
     <div className="trial-screen" style={styleFor(career.color)}>
-      <AppHeader view="trial" onHome={onHome} onExplore={onExplore} onPractice={onPractice} />
+      <AppHeader view="trial" onHome={onHome} onExplore={onExplore} onTrial={() => window.scrollTo({ top: 0, behavior: "smooth" })} onPractice={onPractice} />
       <main className="trial-shell shell">
         <div className="trial-kicker" data-enter><span>IS FIELD TRIAL · {career.shortTitle.toUpperCase()}</span><span>About 3 minutes</span></div>
         <CareerTabs selected={selectedCareerId} onSelect={onSelectCareer} />
@@ -1048,11 +1016,13 @@ function InterviewScreen({
   onSelectCareer,
   onHome,
   onExplore,
+  onTrial,
 }: {
   selectedCareerId: CareerId;
   onSelectCareer: (id: CareerId) => void;
   onHome: () => void;
   onExplore: () => void;
+  onTrial: () => void;
 }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -1229,11 +1199,10 @@ function InterviewScreen({
 
   return (
     <div className="interview-screen" style={styleFor(career.color)}>
-      <AppHeader view="interview" onHome={onHome} onExplore={onExplore} onPractice={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <AppHeader view="interview" onHome={onHome} onExplore={onExplore} onTrial={onTrial} onPractice={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
       <main className="interview-shell shell">
         <section className="practice-header" data-enter>
           <div><p className="eyebrow"><span /> Interview practice studio</p><h1>Practise until your answer sounds like you.</h1><p>Use role-specific prompts, a clear coaching rubric, and strong-answer comparisons to make your own evidence easier to hear under pressure.</p></div>
-          <div className="practice-status"><span><Mic /> {recorderSupported ? "Record + replay ready" : voiceSupported ? "Voice dictation ready" : "Typing ready"}</span><span><Target /> {career.shortTitle} track</span></div>
         </section>
 
         <CareerTabs selected={selectedCareerId} onSelect={onSelectCareer} />
@@ -1366,7 +1335,7 @@ function SiteFooter() {
       <div className="shell">
         <Brand />
         <p>Student-built prototype for BYU Information Systems. Career matches are exploration prompts, not assessments or guarantees.</p>
-        <div><a href="https://marriott.byu.edu/infosys/" target="_blank" rel="noreferrer">BYU Information Systems <ExternalLink /></a><span>Field trial build v3</span></div>
+        <div><a href="https://marriott.byu.edu/infosys/" target="_blank" rel="noreferrer">BYU Information Systems <ExternalLink /></a></div>
       </div>
     </footer>
   );
@@ -1467,13 +1436,13 @@ export default function LaunchpadApp() {
   return (
     <div ref={rootRef}>
       {view === "home" && (
-        <HomeScreen onStart={() => startQuiz()} onExplore={() => exploreCareer(selectedCareerId)} onPractice={() => setView("interview")} onSelectCareer={exploreCareer} />
+        <HomeScreen onStart={() => startQuiz()} onExplore={() => exploreCareer(selectedCareerId)} onTrial={() => setView("trial")} onPractice={() => setView("interview")} onSelectCareer={exploreCareer} />
       )}
       {view === "quiz" && (
         <QuizScreen answers={answers} questionIndex={questionIndex} onAnswer={(optionId) => setAnswers((current) => ({ ...current, [questionIndex]: optionId }))} onBack={goBackQuiz} onContinue={continueQuiz} onExit={() => setView("home")} />
       )}
       {view === "reveal" && (
-        <RevealScreen answers={answers} matches={matches} onContinue={() => setView("dashboard")} onTrial={() => setView("trial")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
+        <RevealScreen answers={answers} matches={matches} onHome={() => setView("home")} onContinue={() => setView("dashboard")} onTrial={() => setView("trial")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
       )}
       {view === "dashboard" && (
         <DashboardScreen answers={answers} selectedCareerId={selectedCareerId} matches={matches} readiness={readiness} trialResults={trialResults} onSelectCareer={setSelectedCareerId} onToggleReadiness={(id) => setReadiness((current) => ({ ...current, [id]: !current[id] }))} onHome={() => setView("home")} onTrial={() => setView("trial")} onPractice={() => setView("interview")} onRetake={() => startQuiz(true)} />
@@ -1482,7 +1451,7 @@ export default function LaunchpadApp() {
         <FieldTrialScreen key={selectedCareerId} selectedCareerId={selectedCareerId} existingResult={trialResults[selectedCareerId]} onSelectCareer={setSelectedCareerId} onComplete={(result) => setTrialResults((current) => ({ ...current, [selectedCareerId]: result }))} onHome={() => setView("home")} onExplore={() => setView("dashboard")} onPractice={() => setView("interview")} />
       )}
       {view === "interview" && (
-        <InterviewScreen key={selectedCareerId} selectedCareerId={selectedCareerId} onSelectCareer={setSelectedCareerId} onHome={() => setView("home")} onExplore={() => setView("dashboard")} />
+        <InterviewScreen key={selectedCareerId} selectedCareerId={selectedCareerId} onSelectCareer={setSelectedCareerId} onHome={() => setView("home")} onExplore={() => setView("dashboard")} onTrial={() => setView("trial")} />
       )}
     </div>
   );
